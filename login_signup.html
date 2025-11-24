@@ -4,27 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | GT Mall</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
-  
+
+  <!-- Firebase v8 (CDN) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+  <!-- 🔑 Your Firebase config (v8 style) -->
   <script>
-    // 🛑 IMPORTANT: REPLACE with your actual Firebase configuration
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyB88MqegaekweUn5Qtc-w9SMQ2tn02iM3xQ",
+      authDomain: "gtmall-7b220.firebaseapp.com",
+      projectId: "gtmall-7b220",
+      storageBucket: "gtmall-7b220.firebasestorage.app",
+      messagingSenderId: "303908707758",
+      appId: "1:303908707758:web:8bb9127fcc92f3080c93c3f",
+      measurementId: "G-HQTIKX2NTQ3"
     };
 
-    // Initialize Firebase
+    // Initialize Firebase (v8)
     firebase.initializeApp(firebaseConfig);
   </script>
-
 </head>
-<body>
+<body class="auth-page">
   
   <div id="recaptcha-container"></div>
 
@@ -32,6 +40,7 @@
     
     <div class="form-container">
       
+      <!-- SIGN UP -->
       <form id="signupForm" class="sign-up-form form-box">
         <div class="logo-placeholder">GT Mall</div>
         <h2>Create Account</h2>
@@ -41,28 +50,42 @@
         <button type="submit" class="sign-up-btn">SIGN UP</button>
       </form>
 
+      <!-- SIGN IN -->
       <form id="loginForm" class="sign-in-form form-box">
         <div class="logo-placeholder">GT Mall</div>
         <h2>Sign In</h2>
         
+        <!-- Password login -->
         <div id="passwordLoginSection">
           <input type="text" name="login_name" placeholder="Mobile Number or Name" required> 
           <input type="password" name="login_password" placeholder="Password" required>
           <a href="#" class="forgot-pass">Forgot password?</a>
-          <a href="#" id="switchToOTP" class="forgot-pass" style="color:#a6ce39; font-weight:600; margin-bottom: 15px;">Login with OTP?</a>
+          <a href="#" id="switchToOTP" class="forgot-pass" style="color:#a6ce39; font-weight:600; margin-bottom: 15px;">
+            Login with OTP?
+          </a>
           <button type="submit" class="sign-in-btn">SIGN IN</button>
         </div>
 
+        <!-- OTP login -->
         <div id="otpLoginSection" style="display: none; flex-direction:column;">
           <input type="text" id="otpMobileInput" placeholder="Enter Mobile Number (e.g., 9876543210)" required> 
-          <button type="button" id="sendOtpButton" class="ghost-btn" style="width:100%; margin-top:10px; margin-bottom:15px; background-color:#a6ce39; color:#fff; border:none;">SEND OTP</button>
+          <button type="button" id="sendOtpButton" class="ghost-btn" 
+                  style="width:100%; margin-top:10px; margin-bottom:15px; background-color:#a6ce39; color:#fff; border:none;">
+            SEND OTP
+          </button>
           <input type="text" id="otpInput" placeholder="Enter 6-digit OTP" disabled required>
-          <button type="button" id="verifyOtpButton" class="sign-in-btn" style="margin-top:15px;" disabled>VERIFY & LOGIN</button>
-          <a href="#" id="switchToPassword" class="forgot-pass" style="color:#a6ce39; font-weight:600; margin-top: 25px;">Login with Password?</a>
+          <button type="button" id="verifyOtpButton" class="sign-in-btn" style="margin-top:15px;" disabled>
+            VERIFY & LOGIN
+          </button>
+          <a href="#" id="switchToPassword" class="forgot-pass" 
+             style="color:#a6ce39; font-weight:600; margin-top: 25px;">
+            Login with Password?
+          </a>
         </div>
       </form>
     </div>
 
+    <!-- GREEN SIDE PANEL -->
     <div class="split-panel welcome-panel">
       <div class="content" id="overlay-content">
         <h1 id="overlay-title">Welcome Back!</h1>
@@ -73,175 +96,176 @@
   </div>
 
   <script>
-    // --- UI Elements ---
-    const mainContainer = document.getElementById('mainContainer');
-    const slideToggleBtn = document.getElementById('slideToggleBtn');
-    const signupForm = document.getElementById('signupForm');
-    const loginForm = document.getElementById('loginForm');
-    
-    // OTP/Password Toggle elements
-    const passwordLoginSection = document.getElementById('passwordLoginSection');
-    const otpLoginSection = document.getElementById('otpLoginSection');
-    const switchToOTP = document.getElementById('switchToOTP');
-    const switchToPassword = document.getElementById('switchToPassword');
-    const sendOtpButton = document.getElementById('sendOtpButton');
-    const verifyOtpButton = document.getElementById('verifyOtpButton');
-    const otpMobileInput = document.getElementById('otpMobileInput');
-    const otpInput = document.getElementById('otpInput');
-    
-    // Firebase variables
-    let verifier; 
-    let confirmationResult; 
-
-    // Check if user is already logged in
+    // If already logged in, redirect to home
     if (localStorage.getItem("userName")) {
       window.location.href = "index.html";
     }
 
-    // --- FIREBASE RECAPTCHA INITIALIZATION ---
-    window.onload = function() {
-        // Initializes the invisible Recaptcha Verifier
-        verifier = new firebase.auth.RecaptchaVerifier('sendOtpButton', {
-            'size': 'invisible', 
-            'callback': (response) => {
-                console.log("reCAPTCHA solved.");
-            }
-        });
-        verifier.render(); 
-    }
+    let verifier;           // Firebase RecaptchaVerifier
+    let confirmationResult; // Result of signInWithPhoneNumber
 
-    // --- 1. SLIDING UI Toggle Logic ---
-    slideToggleBtn.addEventListener('click', () => {
-      mainContainer.classList.toggle('sign-in-active');
-      
-      const overlayTitle = document.getElementById('overlay-title');
-      const overlayText = document.getElementById('overlay-text');
-      
-      if (mainContainer.classList.contains('sign-in-active')) {
-        overlayTitle.textContent = 'Hello, Friend!';
-        overlayText.textContent = 'Enter your personal details and start your journey with us';
-        slideToggleBtn.textContent = 'SIGN UP';
-      } else {
-        overlayTitle.textContent = 'Welcome Back!';
-        overlayText.textContent = 'To keep connected with us, please login with your personal info';
-        slideToggleBtn.textContent = 'SIGN IN';
-      }
-    });
+    document.addEventListener("DOMContentLoaded", () => {
+      const mainContainer = document.getElementById('mainContainer');
+      const slideToggleBtn = document.getElementById('slideToggleBtn');
+      const signupForm = document.getElementById('signupForm');
+      const loginForm = document.getElementById('loginForm');
 
-    // --- 2. OTP/Password Form Toggles ---
-    switchToOTP.addEventListener('click', (e) => {
-      e.preventDefault();
-      passwordLoginSection.style.display = 'none';
-      otpLoginSection.style.display = 'flex';
-    });
+      const passwordLoginSection = document.getElementById('passwordLoginSection');
+      const otpLoginSection = document.getElementById('otpLoginSection');
+      const switchToOTP = document.getElementById('switchToOTP');
+      const switchToPassword = document.getElementById('switchToPassword');
+      const sendOtpButton = document.getElementById('sendOtpButton');
+      const verifyOtpButton = document.getElementById('verifyOtpButton');
+      const otpMobileInput = document.getElementById('otpMobileInput');
+      const otpInput = document.getElementById('otpInput');
 
-    switchToPassword.addEventListener('click', (e) => {
-      e.preventDefault();
-      otpLoginSection.style.display = 'none';
-      passwordLoginSection.style.display = 'block';
-    });
+      // 🔐 Firebase invisible reCAPTCHA
+      verifier = new firebase.auth.RecaptchaVerifier('sendOtpButton', {
+        size: 'invisible',
+        callback: () => {
+          console.log("reCAPTCHA solved.");
+        }
+      });
+      verifier.render();
 
-    // --- 3. REAL OTP Process using Firebase ---
-    sendOtpButton.addEventListener('click', () => {
+      // Sliding UI toggle between Sign Up / Sign In
+      slideToggleBtn.addEventListener('click', () => {
+        mainContainer.classList.toggle('sign-in-active');
+        
+        const overlayTitle = document.getElementById('overlay-title');
+        const overlayText = document.getElementById('overlay-text');
+        
+        if (mainContainer.classList.contains('sign-in-active')) {
+          overlayTitle.textContent = 'Hello, Friend!';
+          overlayText.textContent = 'Enter your personal details and start your journey with us';
+          slideToggleBtn.textContent = 'SIGN UP';
+        } else {
+          overlayTitle.textContent = 'Welcome Back!';
+          overlayText.textContent = 'To keep connected with us, please login with your personal info';
+          slideToggleBtn.textContent = 'SIGN IN';
+        }
+      });
+
+      // Switch UI: Password → OTP
+      switchToOTP.addEventListener('click', (e) => {
+        e.preventDefault();
+        passwordLoginSection.style.display = 'none';
+        otpLoginSection.style.display = 'flex';
+      });
+
+      // Switch UI: OTP → Password
+      switchToPassword.addEventListener('click', (e) => {
+        e.preventDefault();
+        otpLoginSection.style.display = 'none';
+        passwordLoginSection.style.display = 'block';
+      });
+
+      // 👉 SEND OTP
+      sendOtpButton.addEventListener('click', () => {
         const mobile = otpMobileInput.value.trim();
         if (mobile.length !== 10 || isNaN(mobile)) {
-            alert("Please enter a valid 10-digit mobile number.");
-            return;
+          alert("Please enter a valid 10-digit mobile number.");
+          return;
         }
 
-        // Add country code (+91 for India)
-        const phoneNumber = '+91' + mobile; 
-        
-        // Disable UI elements and show loading state
+        const phoneNumber = '+91' + mobile;
+
         otpMobileInput.disabled = true;
         sendOtpButton.textContent = 'Sending...';
         sendOtpButton.disabled = true;
 
-        // Firebase API call to send the OTP
         firebase.auth().signInWithPhoneNumber(phoneNumber, verifier)
-            .then((result) => {
-                confirmationResult = result;
-                
-                // Success: Enable OTP input and timer
-                otpInput.disabled = false;
-                verifyOtpButton.disabled = false;
-                otpInput.focus();
-                
-                alert(`OTP sent to ${mobile}. Please check your phone.`);
-                
-                // Start Resend Timer Logic (30 seconds)
-                let timeLeft = 30;
-                const timer = setInterval(() => {
-                    timeLeft--;
-                    sendOtpButton.textContent = `RESEND OTP (${timeLeft}s)`;
-                    if (timeLeft <= 0) {
-                        clearInterval(timer);
-                        sendOtpButton.textContent = 'RESEND OTP';
-                        sendOtpButton.disabled = false;
-                        otpMobileInput.disabled = false;
-                    }
-                }, 1000);
-            })
-            .catch((error) => {
-                console.error("Error during OTP sending:", error);
-                alert("Failed to send OTP. Error: " + error.message);
-                
-                // Reset UI on error
-                sendOtpButton.textContent = 'SEND OTP';
+          .then((result) => {
+            confirmationResult = result;
+
+            otpInput.disabled = false;
+            verifyOtpButton.disabled = false;
+            otpInput.focus();
+
+            alert(`OTP sent to ${mobile}. Please check your phone.`);
+
+            // Resend timer (30 sec)
+            let timeLeft = 30;
+            const timer = setInterval(() => {
+              timeLeft--;
+              sendOtpButton.textContent = `RESEND OTP (${timeLeft}s)`;
+              if (timeLeft <= 0) {
+                clearInterval(timer);
+                sendOtpButton.textContent = 'RESEND OTP';
                 sendOtpButton.disabled = false;
                 otpMobileInput.disabled = false;
-            });
-    });
+              }
+            }, 1000);
+          })
+          .catch((error) => {
+            console.error("Error during OTP sending:", error);
+            alert("Failed to send OTP. Error: " + error.message);
 
-    verifyOtpButton.addEventListener('click', () => {
+            sendOtpButton.textContent = 'SEND OTP';
+            sendOtpButton.disabled = false;
+            otpMobileInput.disabled = false;
+          });
+      });
+
+      // 👉 VERIFY OTP
+      verifyOtpButton.addEventListener('click', () => {
         const enteredOTP = otpInput.value.trim();
-        
-        if (!confirmationResult) {
-            alert("Please send the OTP first.");
-            return;
+
+        if (enteredOTP.length !== 6 || isNaN(enteredOTP)) {
+          alert("Please enter a valid 6-digit OTP.");
+          return;
         }
-        
-        // Firebase API call to verify the OTP
+
+        if (!confirmationResult) {
+          alert("Please send the OTP first.");
+          return;
+        }
+
         confirmationResult.confirm(enteredOTP)
-            .then((result) => {
-                // User is successfully signed in (result.user contains user info)
-                const mobile = otpMobileInput.value.trim();
-                
-                // Log the user in
-                localStorage.setItem("userName", mobile); // Use mobile number as username
-                sessionStorage.setItem("welcomeShown", "false"); 
-                alert(`Verification Successful! Welcome, ${mobile}.`);
-                window.location.href = "index.html";
-            })
-            .catch((error) => {
-                console.error("Error during OTP verification:", error);
-                alert("Invalid OTP. Please try again.");
-            });
-    });
-    
-    // --- 4. Handle Sign Up (Password based) ---
-    signupForm.addEventListener('submit', function(event) {
-      event.preventDefault();
-      const name = signupForm.querySelector('input[name="name"]').value.trim();
-      const password = signupForm.querySelector('input[name="password"]').value.trim();
+          .then((result) => {
+            const mobile = otpMobileInput.value.trim();
+            localStorage.setItem("userName", mobile);
+            sessionStorage.setItem("welcomeShown", "false");
+            alert(`Verification Successful! Welcome, ${mobile}.`);
+            window.location.href = "index.html";
+          })
+          .catch((error) => {
+            console.error("Error during OTP verification:", error);
+            alert("Invalid OTP. Please try again.");
+          });
+      });
 
-      if (name && password) {
-        localStorage.setItem("userRegisteredName", name);
-        localStorage.setItem("userRegisteredPass", password);
-        localStorage.setItem("userName", name);
-        sessionStorage.setItem("welcomeShown", "false"); 
-        
-        alert(`Account created successfully! Welcome, ${name}.`);
-        window.location.href = "index.html"; 
-      } else {
-        alert("Please fill in all required fields for Sign Up.");
-      }
-    });
+      // Allow Enter key to submit OTP
+      otpInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter' && !verifyOtpButton.disabled) {
+          verifyOtpButton.click();
+        }
+      });
 
-    // --- 5. Handle Password Sign In ---
-    loginForm.querySelector('#passwordLoginSection').parentElement.addEventListener('submit', function(event) {
-        if (passwordLoginSection.style.display === 'none') return; // Skip if OTP section is visible
-        
+      // SIGN UP (local demo using localStorage)
+      signupForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name = signupForm.querySelector('input[name="name"]').value.trim();
+        const password = signupForm.querySelector('input[name="password"]').value.trim();
+
+        if (name && password) {
+          localStorage.setItem("userRegisteredName", name);
+          localStorage.setItem("userRegisteredPass", password);
+          localStorage.setItem("userName", name);
+          sessionStorage.setItem("welcomeShown", "false");
+          
+          alert(`Account created successfully! Welcome, ${name}.`);
+          window.location.href = "index.html";
+        } else {
+          alert("Please fill in all required fields for Sign Up.");
+        }
+      });
+
+      // PASSWORD SIGN IN (local demo)
+      loginForm.addEventListener('submit', (event) => {
+        // If OTP login is visible, ignore this submit
+        if (passwordLoginSection.style.display === 'none') return;
+
         event.preventDefault();
 
         const registeredName = localStorage.getItem("userRegisteredName");
@@ -251,17 +275,19 @@
         const loginPass = loginForm.querySelector('input[name="login_password"]').value.trim();
         
         if (!registeredName) {
-            alert("No registered account found. Please Sign Up first.");
-            return;
+          alert("No registered account found. Please Sign Up first.");
+          return;
         }
         
-        if ( (loginInput === registeredName) && loginPass === registeredPass) {
+        if ((loginInput === registeredName) && loginPass === registeredPass) {
           localStorage.setItem("userName", registeredName);
-          sessionStorage.setItem("welcomeShown", "false"); 
-          window.location.href = "index.html"; 
+          sessionStorage.setItem("welcomeShown", "false");
+          window.location.href = "index.html";
         } else {
           alert("Invalid credentials. Please check your Name/Mobile and Password.");
         }
+      });
+
     });
   </script>
 
