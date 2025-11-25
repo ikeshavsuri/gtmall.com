@@ -1,350 +1,372 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | GT Mall</title>
 
-  <!-- Google Font -->
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css">
 
-  <!-- Optional: your global CSS -->
-  <link rel="stylesheet" href="style.css" />
+  <!-- Firebase v8 (CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-  <style>
-    body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #f0fff0, #e6f5ff);
-      min-height: 100vh;
-      margin: 0;
-    }
+  <!-- ✅ Correct Firebase config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB08MQegakweUn5Qtc-w95NQztn0z1M3xQ",
+      authDomain: "gtmall-7b220.firebaseapp.com",
+      projectId: "gtmall-7b220",
+      storageBucket: "gtmall-7b220.appspot.com",
+      messagingSenderId: "303908707758",
+      appId: "1:303908707758:web:8bb9127fcc92f308c93c3f",
+      measurementId: "G-HQTXK2NTQ3"
+    };
 
-    .auth-wrapper {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .auth-card {
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-      overflow: hidden;
-      max-width: 960px;
-      width: 100%;
-    }
-
-    .auth-left {
-      background: linear-gradient(135deg, #a6ce39, #8ac024);
-      color: #fff;
-      padding: 40px 30px;
-    }
-
-    .auth-left h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .auth-left p {
-      font-size: 0.95rem;
-      opacity: 0.95;
-    }
-
-    .auth-right {
-      padding: 30px 30px 35px 30px;
-      background-color: #fff;
-    }
-
-    .brand-mini {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 600;
-      margin-bottom: 20px;
-    }
-
-    .brand-mini img {
-      height: 32px;
-      width: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .auth-title {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .auth-subtitle {
-      font-size: 0.9rem;
-      color: #6c757d;
-      margin-bottom: 18px;
-    }
-
-    .input-group-text {
-      background-color: #f5f5f5;
-      font-weight: 500;
-    }
-
-    .btn-gt-primary {
-      background-color: #0a8239;
-      border: none;
-      font-weight: 600;
-      border-radius: 999px;
-      padding: 10px 16px;
-    }
-
-    .btn-gt-primary:disabled {
-      opacity: 0.7;
-    }
-
-    .btn-gt-primary:hover {
-      background-color: #08652e;
-    }
-
-    .otp-note {
-      font-size: 0.8rem;
-      color: #6c757d;
-    }
-
-    .status-msg {
-      min-height: 20px;
-      font-size: 0.85rem;
-    }
-
-    @media (max-width: 768px) {
-      .auth-left {
-        display: none; /* mobile pe sirf form dikhayenge */
-      }
-
-      .auth-right {
-        padding: 24px 20px 28px 20px;
-      }
-
-      .auth-card {
-        border-radius: 16px;
-      }
-    }
-  </style>
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
-<body>
+<body class="auth-page">
+  
+  <div id="recaptcha-container"></div>
 
-  <div class="auth-wrapper">
-    <div class="auth-card row g-0">
-      <!-- LEFT PANEL (desktop only) -->
-      <div class="auth-left col-md-5 d-none d-md-flex flex-column justify-content-between">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-4">
-            <img src="img/logo.png" alt="GT Mall Logo" style="height:38px;width:38px;border-radius:50%;background:#fff;padding:4px;">
-            <span class="fs-5 fw-semibold">GT Mall</span>
-          </div>
-          <h1>Welcome to GT Mall</h1>
-          <p>Login using your mobile number to track orders, manage your cart, and access exclusive deals.</p>
-        </div>
-        <p class="small mb-0 opacity-75">
-          100% secure login • OTP verified • No password required
-        </p>
-      </div>
+  <div class="main-container" id="mainContainer">
+    
+    <div class="form-container">
+      
+      <!-- SIGN UP (Create Account) -->
+      <form id="signupForm" class="sign-up-form form-box">
+        <div class="logo-placeholder">GT Mall</div>
+        <h2>Create Account</h2>
 
-      <!-- RIGHT PANEL (form) -->
-      <div class="auth-right col-12 col-md-7">
-        <div class="brand-mini d-md-none mb-3">
-          <img src="img/logo.png" alt="GT Mall">
-          <span>GT Mall Secure Login</span>
-        </div>
+        <input type="text" name="name" id="signupName" placeholder="Name" required>
 
-        <h2 class="auth-title">Login or Signup</h2>
-        <p class="auth-subtitle">Enter your mobile number to continue with GT Mall.</p>
-
-        <!-- Phone input -->
-        <label class="form-label fw-semibold">Mobile Number</label>
-        <div class="input-group mb-3">
-          <span class="input-group-text">+91</span>
-          <input type="tel" id="phone-input" class="form-control" placeholder="10-digit mobile number">
-        </div>
-
-        <button id="send-otp-btn" class="btn btn-gt-primary w-100 mb-3">
-          Send OTP
-        </button>
-
-        <!-- OTP section -->
-        <div id="otp-section" class="mb-2" style="display:none;">
-          <label class="form-label fw-semibold">Enter OTP</label>
-          <input type="text" id="otp-input" class="form-control mb-2" placeholder="6-digit OTP">
-          <button id="verify-otp-btn" class="btn btn-dark w-100">
-            Verify & Login
+        <!-- Mobile + SEND OTP inline -->
+        <div class="signup-mobile-row" style="display:flex; gap:8px; margin:8px 0;">
+          <input type="text" name="mobile" id="signupMobileInput" placeholder="Mobile no." required style="flex:1;">
+          <button type="button"
+                  id="signupSendOtpButton"
+                  class="ghost-btn"
+                  style="white-space:nowrap; padding: 12px 18px; background-color:#a6ce39; color:#fff; border:none; border-radius:999px; font-weight:600;">
+            SEND OTP
           </button>
         </div>
 
-        <div id="status-msg" class="status-msg mt-2"></div>
+        <!-- ENTER OTP instead of password -->
+        <input type="text" name="signup_otp" id="signupOtpInput" placeholder="Enter OTP" required disabled>
 
-        <hr class="my-4" />
+        <button type="submit" class="sign-up-btn">SIGN UP</button>
+      </form>
 
-        <p class="otp-note mb-1">
-          By continuing, you agree to GT Mall's Terms of Use & Privacy Policy.
-        </p>
-        <p class="otp-note mb-0">
-          Having trouble receiving OTP? Ensure your number is correct and not in DND mode.
-        </p>
+      <!-- SIGN IN -->
+      <form id="loginForm" class="sign-in-form form-box">
+        <div class="logo-placeholder">GT Mall</div>
+        <h2>Sign In</h2>
+        
+        <!-- Password login -->
+        <div id="passwordLoginSection">
+          <input type="text" name="login_name" placeholder="Mobile Number or Name" required> 
+          <input type="password" name="login_password" placeholder="Password" required>
+          <a href="#" class="forgot-pass">Forgot password?</a>
+          <a href="#" id="switchToOTP" class="forgot-pass" style="color:#a6ce39; font-weight:600; margin-bottom: 15px;">
+            Login with OTP?
+          </a>
+          <button type="submit" class="sign-in-btn">SIGN IN</button>
+        </div>
+
+        <!-- OTP login -->
+        <div id="otpLoginSection" style="display: none; flex-direction:column;">
+          <input type="text" id="otpMobileInput" placeholder="Enter Mobile Number (e.g., 9876543210)" required> 
+          <button type="button" id="sendOtpButton" class="ghost-btn" 
+                  style="width:100%; margin-top:10px; margin-bottom:15px; background-color:#a6ce39; color:#fff; border:none;">
+            SEND OTP
+          </button>
+          <input type="text" id="otpInput" placeholder="Enter 6-digit OTP" disabled required>
+          <button type="button" id="verifyOtpButton" class="sign-in-btn" style="margin-top:15px;" disabled>
+            VERIFY & LOGIN
+          </button>
+          <a href="#" id="switchToPassword" class="forgot-pass" 
+             style="color:#a6ce39; font-weight:600; margin-top: 25px;">
+            Login with Password?
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- GREEN SIDE PANEL -->
+    <div class="split-panel welcome-panel">
+      <div class="content" id="overlay-content">
+        <h1 id="overlay-title">Welcome Back!</h1>
+        <p id="overlay-text">To keep connected with us, please login with your personal info</p>
+        <button class="ghost-btn" id="slideToggleBtn">SIGN IN</button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase OTP Logic -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getAuth,
-      RecaptchaVerifier,
-      signInWithPhoneNumber,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyB88MqegaekweUn5Qtc-w9SMQ2tn02iM3xQ",
-      authDomain: "gtmall-7b220.firebaseapp.com",
-      projectId: "gtmall-7b220",
-      storageBucket: "gtmall-7b220.firebasestorage.app",
-      messagingSenderId: "303908707758",
-      appId: "1:303908707758:web:8bb9127fcc92f3080c93c3f",
-      measurementId: "G-HQTIKX2NTQ3"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    const phoneInput = document.getElementById("phone-input");
-    const sendOtpBtn = document.getElementById("send-otp-btn");
-    const otpSection = document.getElementById("otp-section");
-    const otpInput = document.getElementById("otp-input");
-    const verifyOtpBtn = document.getElementById("verify-otp-btn");
-    const statusMsg = document.getElementById("status-msg");
-
-    let confirmationResult = null;
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const phone = user.phoneNumber || "User";
-        localStorage.setItem("userName", phone);
-        sessionStorage.setItem("welcomeShown", "false");
-        window.location.href = "index.html";
-      }
-    });
-
-    // reCAPTCHA
-    let recaptcha;
-    function setupRecaptcha() {
-      if (recaptcha) return;
-      recaptcha = new RecaptchaVerifier(
-        sendOtpBtn,
-        { size: "invisible" },
-        auth
-      );
+  <script>
+    // Already logged in?
+    if (localStorage.getItem("userName")) {
+      window.location.href = "index.html";
     }
 
-    // SEND OTP
-    sendOtpBtn.addEventListener("click", async () => {
-      const raw = phoneInput.value.trim();
+    let verifier;                  // Firebase RecaptchaVerifier
+    let loginConfirmationResult;   // For login OTP
+    let signupConfirmationResult;  // For signup OTP
 
-      if (raw.length !== 10 || isNaN(raw)) {
-        statusMsg.textContent = "Please enter a valid 10-digit mobile number.";
-        statusMsg.className = "status-msg text-danger";
-        return;
-      }
+    document.addEventListener("DOMContentLoaded", () => {
+      const mainContainer = document.getElementById('mainContainer');
+      const slideToggleBtn = document.getElementById('slideToggleBtn');
+      const signupForm = document.getElementById('signupForm');
+      const loginForm = document.getElementById('loginForm');
 
-      const fullPhone = "+91" + raw;
+      // SIGNUP elements
+      const signupNameInput = document.getElementById('signupName');
+      const signupMobileInput = document.getElementById('signupMobileInput');
+      const signupOtpInput = document.getElementById('signupOtpInput');
+      const signupSendOtpButton = document.getElementById('signupSendOtpButton');
 
-      try {
-        setupRecaptcha();
-      } catch (e) {
-        console.error("reCAPTCHA error:", e);
-      }
+      // LOGIN elements
+      const passwordLoginSection = document.getElementById('passwordLoginSection');
+      const otpLoginSection = document.getElementById('otpLoginSection');
+      const switchToOTP = document.getElementById('switchToOTP');
+      const switchToPassword = document.getElementById('switchToPassword');
+      const sendOtpButton = document.getElementById('sendOtpButton');
+      const verifyOtpButton = document.getElementById('verifyOtpButton');
+      const otpMobileInput = document.getElementById('otpMobileInput');
+      const otpInput = document.getElementById('otpInput');
 
-      sendOtpBtn.disabled = true;
-      sendOtpBtn.textContent = "Sending OTP...";
-      statusMsg.textContent = "";
-      statusMsg.className = "status-msg";
+      // 🔐 Firebase invisible reCAPTCHA (attach to hidden container)
+      verifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          console.log("reCAPTCHA solved.");
+        }
+      });
+      verifier.render();
 
-      try {
-        confirmationResult = await signInWithPhoneNumber(auth, fullPhone, recaptcha);
+      // Sliding UI toggle between Sign Up / Sign In
+      slideToggleBtn.addEventListener('click', () => {
+        mainContainer.classList.toggle('sign-in-active');
+        
+        const overlayTitle = document.getElementById('overlay-title');
+        const overlayText = document.getElementById('overlay-text');
+        
+        if (mainContainer.classList.contains('sign-in-active')) {
+          overlayTitle.textContent = 'Hello, Friend!';
+          overlayText.textContent = 'Enter your personal details and start your journey with us';
+          slideToggleBtn.textContent = 'SIGN UP';
+        } else {
+          overlayTitle.textContent = 'Welcome Back!';
+          overlayText.textContent = 'To keep connected with us, please login with your personal info';
+          slideToggleBtn.textContent = 'SIGN IN';
+        }
+      });
 
-        statusMsg.textContent = `OTP sent to ${raw}. Please check your SMS.`;
-        statusMsg.className = "status-msg text-success";
+      // Switch UI: Password → OTP
+      switchToOTP.addEventListener('click', (e) => {
+        e.preventDefault();
+        passwordLoginSection.style.display = 'none';
+        otpLoginSection.style.display = 'flex';
+      });
 
-        otpSection.style.display = "block";
-        otpInput.focus();
+      // Switch UI: OTP → Password
+      switchToPassword.addEventListener('click', (e) => {
+        e.preventDefault();
+        otpLoginSection.style.display = 'none';
+        passwordLoginSection.style.display = 'block';
+      });
 
-        let timeLeft = 30;
-        const baseText = "Resend OTP";
-        const timer = setInterval(() => {
-          timeLeft--;
-          sendOtpBtn.textContent = `${baseText} (${timeLeft}s)`;
-          if (timeLeft <= 0) {
-            clearInterval(timer);
-            sendOtpBtn.disabled = false;
-            sendOtpBtn.textContent = baseText;
-          }
-        }, 1000);
-      } catch (err) {
-        console.error("Error sending OTP:", err);
-        statusMsg.textContent = err.message || "Failed to send OTP.";
-        statusMsg.className = "status-msg text-danger";
-        sendOtpBtn.disabled = false;
-        sendOtpBtn.textContent = "Send OTP";
-      }
-    });
+      // 👉 SIGNUP: SEND OTP
+      signupSendOtpButton.addEventListener('click', () => {
+        const mobile = signupMobileInput.value.trim();
+        if (mobile.length !== 10 || isNaN(mobile)) {
+          alert("Please enter a valid 10-digit mobile number.");
+          return;
+        }
 
-    // VERIFY OTP
-    verifyOtpBtn.addEventListener("click", async () => {
-      const code = otpInput.value.trim();
+        const phoneNumber = '+91' + mobile;
 
-      if (!code || code.length !== 6 || isNaN(code)) {
-        statusMsg.textContent = "Please enter a valid 6-digit OTP.";
-        statusMsg.className = "status-msg text-danger";
-        return;
-      }
+        signupMobileInput.disabled = true;
+        signupSendOtpButton.textContent = 'Sending...';
+        signupSendOtpButton.disabled = true;
 
-      if (!confirmationResult) {
-        statusMsg.textContent = "Please request OTP first.";
-        statusMsg.className = "status-msg text-danger";
-        return;
-      }
+        firebase.auth().signInWithPhoneNumber(phoneNumber, verifier)
+          .then((result) => {
+            signupConfirmationResult = result;
 
-      verifyOtpBtn.disabled = true;
-      verifyOtpBtn.textContent = "Verifying...";
+            signupOtpInput.disabled = false;
+            signupOtpInput.focus();
 
-      try {
-        const result = await confirmationResult.confirm(code);
-        const user = result.user;
-        const phone = user.phoneNumber || phoneInput.value.trim();
-        localStorage.setItem("userName", phone);
-        sessionStorage.setItem("welcomeShown", "false");
+            alert(`OTP sent to ${mobile}. Please check your phone.`);
 
-        statusMsg.textContent = "Login successful! Redirecting...";
-        statusMsg.className = "status-msg text-success";
+            let timeLeft = 30;
+            const timer = setInterval(() => {
+              timeLeft--;
+              signupSendOtpButton.textContent = `RESEND OTP (${timeLeft}s)`;
+              if (timeLeft <= 0) {
+                clearInterval(timer);
+                signupSendOtpButton.textContent = 'SEND OTP';
+                signupSendOtpButton.disabled = false;
+                signupMobileInput.disabled = false;
+              }
+            }, 1000);
+          })
+          .catch((error) => {
+            console.error("Error during SIGNUP OTP sending:", error);
+            alert("Failed to send OTP. Error: " + error.message);
 
-        setTimeout(() => {
+            signupSendOtpButton.textContent = 'SEND OTP';
+            signupSendOtpButton.disabled = false;
+            signupMobileInput.disabled = false;
+          });
+      });
+
+      // 👉 LOGIN: SEND OTP
+      sendOtpButton.addEventListener('click', () => {
+        const mobile = otpMobileInput.value.trim();
+        if (mobile.length !== 10 || isNaN(mobile)) {
+          alert("Please enter a valid 10-digit mobile number.");
+          return;
+        }
+
+        const phoneNumber = '+91' + mobile;
+
+        otpMobileInput.disabled = true;
+        sendOtpButton.textContent = 'Sending...';
+        sendOtpButton.disabled = true;
+
+        firebase.auth().signInWithPhoneNumber(phoneNumber, verifier)
+          .then((result) => {
+            loginConfirmationResult = result;
+
+            otpInput.disabled = false;
+            verifyOtpButton.disabled = false;
+            otpInput.focus();
+
+            alert(`OTP sent to ${mobile}. Please check your phone.`);
+
+            let timeLeft = 30;
+            const timer = setInterval(() => {
+              timeLeft--;
+              sendOtpButton.textContent = `RESEND OTP (${timeLeft}s)`;
+              if (timeLeft <= 0) {
+                clearInterval(timer);
+                sendOtpButton.textContent = 'SEND OTP';
+                sendOtpButton.disabled = false;
+                otpMobileInput.disabled = false;
+              }
+            }, 1000);
+          })
+          .catch((error) => {
+            console.error("Error during LOGIN OTP sending:", error);
+            alert("Failed to send OTP. Error: " + error.message);
+
+            sendOtpButton.textContent = 'SEND OTP';
+            sendOtpButton.disabled = false;
+            otpMobileInput.disabled = false;
+          });
+      });
+
+      // 👉 LOGIN: VERIFY OTP
+      verifyOtpButton.addEventListener('click', () => {
+        const enteredOTP = otpInput.value.trim();
+
+        if (enteredOTP.length !== 6 || isNaN(enteredOTP)) {
+          alert("Please enter a valid 6-digit OTP.");
+          return;
+        }
+
+        if (!loginConfirmationResult) {
+          alert("Please send the OTP first.");
+          return;
+        }
+
+        loginConfirmationResult.confirm(enteredOTP)
+          .then((result) => {
+            const mobile = otpMobileInput.value.trim();
+            localStorage.setItem("userName", mobile);
+            sessionStorage.setItem("welcomeShown", "false");
+            alert(`Verification Successful! Welcome, ${mobile}.`);
+            window.location.href = "index.html";
+          })
+          .catch((error) => {
+            console.error("Error during LOGIN OTP verification:", error);
+            alert("Invalid OTP. Please try again.");
+          });
+      });
+
+      otpInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter' && !verifyOtpButton.disabled) {
+          verifyOtpButton.click();
+        }
+      });
+
+      // SIGN UP (Name + verified OTP)
+      signupForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name = signupNameInput.value.trim();
+        const mobile = signupMobileInput.value.trim();
+        const otp = signupOtpInput.value.trim();
+
+        if (!name || !mobile || !otp) {
+          alert("Please fill in Name, Mobile and OTP.");
+          return;
+        }
+
+        if (!signupConfirmationResult) {
+          alert("Please send OTP first.");
+          return;
+        }
+
+        signupConfirmationResult.confirm(otp)
+          .then((result) => {
+            // Phone verified & user signed in
+            localStorage.setItem("userRegisteredName", name);
+            localStorage.setItem("userRegisteredMobile", mobile);
+            localStorage.setItem("userName", name);  // Greet by name
+            sessionStorage.setItem("welcomeShown", "false");
+            
+            alert(`Account created successfully! Welcome, ${name}.`);
+            window.location.href = "index.html";
+          })
+          .catch((error) => {
+            console.error("Error during SIGNUP OTP verification:", error);
+            alert("Invalid OTP for signup. Please try again.");
+          });
+      });
+
+      // PASSWORD SIGN IN (demo, localStorage-based)
+      loginForm.addEventListener('submit', (event) => {
+        if (passwordLoginSection.style.display === 'none') return;
+        event.preventDefault();
+
+        const registeredName = localStorage.getItem("userRegisteredName");
+        const registeredPass = localStorage.getItem("userRegisteredPass"); // may be empty if only OTP signups
+
+        const loginInput = loginForm.querySelector('input[name="login_name"]').value.trim();
+        const loginPass = loginForm.querySelector('input[name="login_password"]').value.trim();
+        
+        if (!registeredName || !registeredPass) {
+          alert("Password login not set. Please use OTP or sign up again.");
+          return;
+        }
+        
+        if ((loginInput === registeredName) && loginPass === registeredPass) {
+          localStorage.setItem("userName", registeredName);
+          sessionStorage.setItem("welcomeShown", "false");
           window.location.href = "index.html";
-        }, 800);
-      } catch (err) {
-        console.error("Error verifying OTP:", err);
-        statusMsg.textContent = err.message || "Invalid OTP. Please try again.";
-        statusMsg.className = "status-msg text-danger";
-        verifyOtpBtn.disabled = false;
-        verifyOtpBtn.textContent = "Verify & Login";
-      }
-    });
+        } else {
+          alert("Invalid credentials. Please check your Name/Mobile and Password.");
+        }
+      });
 
-    otpInput.addEventListener("keyup", (e) => {
-      if (e.key === "Enter") verifyOtpBtn.click();
     });
   </script>
+
 </body>
 </html>
