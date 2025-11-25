@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Your global CSS (navbar etc.) -->
+  <!-- Your global CSS (for navbar, etc.) -->
   <link rel="stylesheet" href="style.css">
 
   <!-- Firebase v8 -->
@@ -61,7 +61,7 @@
       flex-direction: column;
       align-items: center;
       gap: 6px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     .login-logo img {
@@ -77,9 +77,33 @@
       color: #222;
     }
 
+    .tab-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .tab-btn.active {
+      background: #0a8239;
+      color: #ffffff;
+    }
+
     .login-title {
       text-align: center;
-      font-size: 1.4rem;
+      font-size: 1.25rem;
       font-weight: 600;
       margin-bottom: 4px;
     }
@@ -88,7 +112,7 @@
       text-align: center;
       font-size: 0.9rem;
       color: #6b7280;
-      margin-bottom: 18px;
+      margin-bottom: 12px;
     }
 
     .btn-google {
@@ -120,7 +144,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin: 18px 0 12px;
+      margin: 16px 0 10px;
       font-size: 0.8rem;
       color: #9ca3af;
     }
@@ -220,18 +244,29 @@
 
   <div class="login-wrapper">
     <div class="login-card">
-      <!-- Logo + Title -->
+      <!-- Logo -->
       <div class="login-logo">
         <img src="img/logo.png" alt="GT Mall Logo">
         <span>GT Mall</span>
       </div>
 
-      <div class="login-title">Welcome back</div>
-      <div class="login-subtitle">
-        Sign in or create an account to continue shopping.
+      <!-- Tabs -->
+      <div class="tab-row">
+        <button id="tab-login" class="tab-btn active">Log in</button>
+        <button id="tab-signup" class="tab-btn">Sign up</button>
       </div>
 
-      <!-- Google button -->
+      <!-- Title -->
+      <div id="title-login" class="login-title">Welcome back</div>
+      <div id="subtitle-login" class="login-subtitle">
+        Log in with your email or Google.
+      </div>
+      <div id="title-signup" class="login-title" style="display:none;">Create your account</div>
+      <div id="subtitle-signup" class="login-subtitle" style="display:none;">
+        Sign up with your details to start shopping.
+      </div>
+
+      <!-- Google button (common for both modes) -->
       <button type="button" class="btn-google" id="google-btn">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
         <span>Continue with Google</span>
@@ -244,26 +279,60 @@
         <span class="line"></span>
       </div>
 
-      <!-- Email -->
-      <div class="field-label">Email</div>
-      <div class="input-wrapper">
-        <input type="email" id="email-input" placeholder="you@example.com">
+      <!-- ============ LOGIN FORM ============ -->
+      <div id="login-pane">
+        <div class="field-label">Email</div>
+        <div class="input-wrapper">
+          <input type="email" id="login-email" placeholder="you@example.com">
+        </div>
+
+        <div class="field-label">Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="login-password" placeholder="Your password">
+        </div>
+
+        <button id="login-submit-btn" class="btn-primary-gt">
+          Continue
+        </button>
       </div>
 
-      <!-- Password -->
-      <div class="field-label">Password</div>
-      <div class="input-wrapper">
-        <input type="password" id="password-input" placeholder="Minimum 6 characters">
-      </div>
+      <!-- ============ SIGNUP FORM ============ -->
+      <div id="signup-pane" style="display:none;">
+        <div class="field-label">Full Name</div>
+        <div class="input-wrapper">
+          <input type="text" id="signup-name" placeholder="Your name">
+        </div>
 
-      <button id="email-submit-btn" class="btn-primary-gt">
-        Continue
-      </button>
+        <div class="field-label">Mobile Number</div>
+        <div class="input-wrapper">
+          <input type="tel" id="signup-mobile" placeholder="10-digit mobile number">
+        </div>
+
+        <div class="field-label">Email</div>
+        <div class="input-wrapper">
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+
+        <div class="field-label">Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="signup-password" placeholder="Minimum 6 characters">
+        </div>
+
+        <div class="field-label">Confirm Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="signup-confirm" placeholder="Re-enter password">
+        </div>
+
+        <button id="signup-submit-btn" class="btn-primary-gt">
+          Create account
+        </button>
+      </div>
 
       <div id="status-msg" class="status-msg"></div>
 
       <div class="small-note">
-        New here? Just enter your email and a new account will be created for you automatically.
+        New user? Use the Sign up tab. We’ll create your account with the email and password you enter.
+        A verification email may be sent for security.
       </div>
 
       <div class="bottom-row">
@@ -272,39 +341,80 @@
     </div>
   </div>
 
-  <!-- JS: Email + Google login -->
+  <!-- JS: Auth logic -->
   <script>
-    // If already have userName, you could redirect to index (optional)
-    // if (localStorage.getItem("userName")) {
-    //   window.location.href = "index.html";
-    // }
-
     const auth = firebase.auth();
 
+    function setStatus(msg, color) {
+      const el = document.getElementById("status-msg");
+      el.textContent = msg || "";
+      el.style.color = color || "#6b7280";
+    }
+
+    function handleLoginSuccess(user) {
+      const name =
+        user.displayName ||
+        (user.email ? user.email.split("@")[0] : "User");
+      localStorage.setItem("userName", name);
+      sessionStorage.setItem("welcomeShown", "false");
+      window.location.href = "index.html";
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
-      const emailInput      = document.getElementById("email-input");
-      const passwordInput   = document.getElementById("password-input");
-      const emailSubmitBtn  = document.getElementById("email-submit-btn");
-      const googleBtn       = document.getElementById("google-btn");
-      const statusMsg       = document.getElementById("status-msg");
+      const tabLogin   = document.getElementById("tab-login");
+      const tabSignup  = document.getElementById("tab-signup");
+      const loginPane  = document.getElementById("login-pane");
+      const signupPane = document.getElementById("signup-pane");
+      const titleLogin = document.getElementById("title-login");
+      const subtitleLogin = document.getElementById("subtitle-login");
+      const titleSignup = document.getElementById("title-signup");
+      const subtitleSignup = document.getElementById("subtitle-signup");
 
-      function setStatus(msg, color) {
-        statusMsg.textContent = msg || "";
-        statusMsg.style.color = color || "#6b7280";
+      const googleBtn  = document.getElementById("google-btn");
+
+      const loginEmail    = document.getElementById("login-email");
+      const loginPassword = document.getElementById("login-password");
+      const loginSubmit   = document.getElementById("login-submit-btn");
+
+      const signupName     = document.getElementById("signup-name");
+      const signupMobile   = document.getElementById("signup-mobile");
+      const signupEmail    = document.getElementById("signup-email");
+      const signupPassword = document.getElementById("signup-password");
+      const signupConfirm  = document.getElementById("signup-confirm");
+      const signupSubmit   = document.getElementById("signup-submit-btn");
+
+      // ----- Tab toggle -----
+      function showLogin() {
+        tabLogin.classList.add("active");
+        tabSignup.classList.remove("active");
+        loginPane.style.display = "";
+        signupPane.style.display = "none";
+        titleLogin.style.display = "";
+        subtitleLogin.style.display = "";
+        titleSignup.style.display = "none";
+        subtitleSignup.style.display = "none";
+        setStatus("", "");
       }
 
-      function handleLoginSuccess(user) {
-        const name = user.displayName || user.email || "User";
-        localStorage.setItem("userName", name);
-        sessionStorage.setItem("welcomeShown", "false");
-        window.location.href = "index.html";
+      function showSignup() {
+        tabSignup.classList.add("active");
+        tabLogin.classList.remove("active");
+        loginPane.style.display = "none";
+        signupPane.style.display = "";
+        titleLogin.style.display = "none";
+        subtitleLogin.style.display = "none";
+        titleSignup.style.display = "";
+        subtitleSignup.style.display = "";
+        setStatus("", "");
       }
 
-      // ========== Google Sign In ==========
+      tabLogin.addEventListener("click", showLogin);
+      tabSignup.addEventListener("click", showSignup);
+
+      // ----- Google sign in -----
       googleBtn.addEventListener("click", () => {
         setStatus("", "");
         const provider = new firebase.auth.GoogleAuthProvider();
-
         googleBtn.disabled = true;
         googleBtn.style.opacity = "0.8";
 
@@ -320,68 +430,111 @@
           });
       });
 
-      // ========== Email + Password Sign In/Up ==========
-      emailSubmitBtn.addEventListener("click", () => {
-        const email = emailInput.value.trim();
-        const pass  = passwordInput.value.trim();
+      // ----- Login with email/password -----
+      loginSubmit.addEventListener("click", () => {
+        const email = loginEmail.value.trim();
+        const pass  = loginPassword.value.trim();
 
         if (!email) {
           setStatus("Please enter your email.", "#dc2626");
           return;
         }
-        if (!pass || pass.length < 6) {
-          setStatus("Password must be at least 6 characters.", "#dc2626");
+        if (!pass) {
+          setStatus("Please enter your password.", "#dc2626");
           return;
         }
 
-        setStatus("Checking your account...", "#6b7280");
-        emailSubmitBtn.disabled = true;
-        emailSubmitBtn.textContent = "Please wait...";
+        setStatus("Logging you in...", "#6b7280");
+        loginSubmit.disabled = true;
+        loginSubmit.textContent = "Please wait...";
 
-        // Pehle login try karo:
         auth.signInWithEmailAndPassword(email, pass)
           .then((result) => {
             handleLoginSuccess(result.user);
           })
           .catch((error) => {
+            console.error("Login error:", error);
             if (error.code === "auth/user-not-found") {
-              // Account nahi mila → naya bana do
-              setStatus("Creating new account...", "#6b7280");
-              return auth.createUserWithEmailAndPassword(email, pass)
-                .then((result) => {
-                  // Optional: displayName set kar sakte ho
-                  return result.user.updateProfile({
-                    displayName: email.split("@")[0]
-                  }).then(() => result);
-                })
-                .then((result) => {
-                  handleLoginSuccess(result.user);
-                });
+              setStatus("Account not found. Try Sign up tab.", "#dc2626");
             } else if (error.code === "auth/wrong-password") {
               setStatus("Incorrect password. Please try again.", "#dc2626");
             } else {
-              console.error("Email sign-in error:", error);
               setStatus(error.message || "Something went wrong.", "#dc2626");
             }
           })
           .finally(() => {
-            emailSubmitBtn.disabled = false;
-            emailSubmitBtn.textContent = "Continue";
+            loginSubmit.disabled = false;
+            loginSubmit.textContent = "Continue";
           });
       });
 
-      // Enter key support
-      passwordInput.addEventListener("keyup", (e) => {
-        if (e.key === "Enter") {
-          emailSubmitBtn.click();
-        }
+      // ----- Sign up with email/password -----
+      signupSubmit.addEventListener("click", () => {
+        const name   = signupName.value.trim();
+        const mobile = signupMobile.value.trim();
+        const email  = signupEmail.value.trim();
+        const pass   = signupPassword.value.trim();
+        const conf   = signupConfirm.value.trim();
+
+        if (!name)   return setStatus("Please enter your name.", "#dc2626");
+        if (!mobile || mobile.length < 6)
+          return setStatus("Please enter a valid mobile number.", "#dc2626");
+        if (!email)  return setStatus("Please enter your email.", "#dc2626");
+        if (!pass || pass.length < 6)
+          return setStatus("Password must be at least 6 characters.", "#dc2626");
+        if (pass !== conf)
+          return setStatus("Passwords do not match.", "#dc2626");
+
+        setStatus("Creating your account...", "#6b7280");
+        signupSubmit.disabled = true;
+        signupSubmit.textContent = "Please wait...";
+
+        auth.createUserWithEmailAndPassword(email, pass)
+          .then((result) => {
+            const user = result.user;
+
+            // Name set karo
+            return user.updateProfile({ displayName: name })
+              .then(() => {
+                // Mobile ko localStorage me rakh sakte ho (ya later DB me)
+                localStorage.setItem("userMobile", mobile);
+
+                // Optional: verification email
+                if (!user.emailVerified) {
+                  user.sendEmailVerification().catch(() => {});
+                }
+
+                handleLoginSuccess(user);
+              });
+          })
+          .catch((error) => {
+            console.error("Signup error:", error);
+            if (error.code === "auth/email-already-in-use") {
+              setStatus("Email already in use. Try logging in.", "#dc2626");
+              showLogin();
+              loginEmail.value = email;
+            } else {
+              setStatus(error.message || "Unable to create account.", "#dc2626");
+            }
+          })
+          .finally(() => {
+            signupSubmit.disabled = false;
+            signupSubmit.textContent = "Create account";
+          });
       });
-      emailInput.addEventListener("keyup", (e) => {
-        if (e.key === "Enter") {
-          passwordInput.focus();
-        }
+
+      // Enter key shortcuts
+      loginPassword.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") loginSubmit.click();
+      });
+      loginEmail.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") loginPassword.focus();
+      });
+
+      signupConfirm.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") signupSubmit.click();
       });
     });
   </script>
 </body>
-</html>                  
+</html>               
