@@ -17,7 +17,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-  <!-- ✅ Correct Firebase config -->
+  <!-- ✅ Firebase config -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyB08MQegakweUn5Qtc-w95NQztn0z1M3xQ",
@@ -252,8 +252,8 @@
 
       <!-- Tabs -->
       <div class="tab-row">
-        <button id="tab-login" class="tab-btn active">Log in</button>
-        <button id="tab-signup" class="tab-btn">Sign up</button>
+        <button id="tab-login" class="tab-btn active" type="button">Log in</button>
+        <button id="tab-signup" class="tab-btn" type="button">Sign up</button>
       </div>
 
       <!-- Titles -->
@@ -291,7 +291,7 @@
           <input type="password" id="login-password" placeholder="Your password">
         </div>
 
-        <button id="login-submit-btn" class="btn-primary-gt">
+        <button id="login-submit-btn" class="btn-primary-gt" type="button">
           Continue
         </button>
       </div>
@@ -323,7 +323,7 @@
           <input type="password" id="signup-confirm" placeholder="Re-enter password">
         </div>
 
-        <button id="signup-submit-btn" class="btn-primary-gt">
+        <button id="signup-submit-btn" class="btn-primary-gt" type="button">
           Create account
         </button>
       </div>
@@ -331,8 +331,8 @@
       <div id="status-msg" class="status-msg"></div>
 
       <div class="small-note">
-        New user? Use the Sign up tab. We’ll send a verification email – 
-        you must verify before you can log in.
+        After sign up, we’ll send a verification email.  
+        You must verify before logging in with email & password.
       </div>
 
       <div class="bottom-row">
@@ -341,7 +341,7 @@
     </div>
   </div>
 
-  <!-- JS: Auth logic with email verification -->
+  <!-- JS: Auth logic with email verification + alerts -->
   <script>
     const auth = firebase.auth();
 
@@ -411,8 +411,9 @@
       tabLogin.addEventListener("click", showLogin);
       tabSignup.addEventListener("click", showSignup);
 
-      // ----- Google sign in (allowed even if email not verified by Firebase, because Google itself verified) -----
-      googleBtn.addEventListener("click", () => {
+      // ----- Google sign in -----
+      googleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
         setStatus("", "");
         const provider = new firebase.auth.GoogleAuthProvider();
         googleBtn.disabled = true;
@@ -431,7 +432,8 @@
       });
 
       // ----- Login with email/password -----
-      loginSubmit.addEventListener("click", () => {
+      loginSubmit.addEventListener("click", (e) => {
+        e.preventDefault();
         const email = loginEmail.value.trim();
         const pass  = loginPassword.value.trim();
 
@@ -452,17 +454,22 @@
           .then(async (result) => {
             const user = result.user;
 
-            // ✅ Email verification check
+            // Email verification check
             if (!user.emailVerified) {
-              try {
-                await user.sendEmailVerification();
-              } catch (e) {}
+              try { await user.sendEmailVerification(); } catch (e) {}
               setStatus("Please verify your email first. A verification link has been sent again.", "#dc2626");
+
+              alert(
+                "Your email is not verified yet.\n\n" +
+                "We just sent you another verification link to:\n" +
+                email +
+                "\n\nPlease click that link and then log in again."
+              );
+
               await auth.signOut();
               return;
             }
 
-            // Verified → allow login
             handleLoginSuccess(user);
           })
           .catch((error) => {
@@ -471,6 +478,8 @@
               setStatus("Account not found. Try Sign up tab.", "#dc2626");
             } else if (error.code === "auth/wrong-password") {
               setStatus("Incorrect password. Please try again.", "#dc2626");
+            } else if (error.code === "auth/too-many-requests") {
+              setStatus("Too many attempts. Try again later.", "#dc2626");
             } else {
               setStatus(error.message || "Something went wrong.", "#dc2626");
             }
@@ -481,8 +490,9 @@
           });
       });
 
-      // ----- Sign up with email/password (with verification email) -----
-      signupSubmit.addEventListener("click", () => {
+      // ----- Sign up with email/password -----
+      signupSubmit.addEventListener("click", async (e) => {
+        e.preventDefault();
         const name   = signupName.value.trim();
         const mobile = signupMobile.value.trim();
         const email  = signupEmail.value.trim();
@@ -503,29 +513,35 @@
         signupSubmit.textContent = "Please wait...";
 
         auth.createUserWithEmailAndPassword(email, pass)
-          .then((result) => {
+          .then(async (result) => {
             const user = result.user;
 
-            // Name set karo
-            return user.updateProfile({ displayName: name }).then(async () => {
-              // Mobile localStorage me rakh lo (agar future me use karna ho)
-              localStorage.setItem("userMobile", mobile);
+            try {
+              await user.updateProfile({ displayName: name });
+            } catch (e) {
+              console.error("updateProfile error:", e);
+            }
 
-              // ✅ Send verification email
-              try {
-                await user.sendEmailVerification();
-              } catch (e) { console.error("Verification email error:", e); }
+            localStorage.setItem("userMobile", mobile);
 
-              // Auto login mat karo – pehle verify kare
+            try {
+              await user.sendEmailVerification();
               setStatus("Account created! Please check your email and verify before logging in.", "#0a8239");
 
-              // Log out for safety
-              await auth.signOut();
+              alert(
+                "Your account has been created!\n\n" +
+                "We have sent a verification email to:\n" +
+                email +
+                "\n\nPlease open that email, click on 'Verify', then come back here and log in."
+              );
+            } catch (e) {
+              console.error("Verification email error:", e);
+              setStatus("Account created but failed to send verification email. Check Firebase settings.", "#dc2626");
+            }
 
-              // Switch to Login tab so user knows next step
-              showLogin();
-              loginEmail.value = email;
-            });
+            await auth.signOut();
+            showLogin();
+            loginEmail.value = email;
           })
           .catch((error) => {
             console.error("Signup error:", error);
@@ -533,6 +549,8 @@
               setStatus("Email already in use. Try logging in.", "#dc2626");
               showLogin();
               loginEmail.value = email;
+            } else if (error.code === "auth/operation-not-allowed") {
+              setStatus("Email/Password sign-in is disabled in Firebase. Enable it in the console.", "#dc2626");
             } else {
               setStatus(error.message || "Unable to create account.", "#dc2626");
             }
@@ -550,7 +568,6 @@
       loginEmail.addEventListener("keyup", (e) => {
         if (e.key === "Enter") loginPassword.focus();
       });
-
       signupConfirm.addEventListener("keyup", (e) => {
         if (e.key === "Enter") signupSubmit.click();
       });
