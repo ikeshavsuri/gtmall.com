@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | GT Mall</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Global CSS (only for font reset etc, not navbar here) -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+  <script>
+    // ✅ Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyB08MQegakweUn5Qtc-w95NQztn0z1M3xQ",
+      authDomain: "gtmall-7b220.firebaseapp.com",
+      projectId: "gtmall-7b220",
+      storageBucket: "gtmall-7b220.appspot.com",
+      messagingSenderId: "303908707758",
+      appId: "1:303908707758:web:8bb9127fcc92f308c93c3f",
+      measurementId: "G-HQTXK2NTQ3"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- Our login logic file from /js/login.js -->
+  <script src="js/login.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #f3ffe8, #e6f6ff);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .auth-wrapper {
+      width: 100%;
+      max-width: 430px;
+      padding: 16px;
+    }
+
+    .auth-card {
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+      padding: 26px 22px 24px;
+    }
+
+    .auth-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .auth-logo img {
+      height: 40px;
+      width: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .auth-logo span {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #222;
+    }
+
+    .tab-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .tab-btn.active {
+      background: #0a8239;
+      color: #ffffff;
+    }
+
+    .auth-title {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .auth-subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .btn-google {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .btn-google img {
+      height: 18px;
+      width: 18px;
+    }
+
+    .btn-google:hover {
+      background-color: #f9fafb;
+    }
+
+    .or-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 16px 0 10px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .or-row span.line {
+      flex-grow: 1;
+      height: 1px;
+      background-color: #e5e7eb;
+    }
+
+    .field-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #374151;
+    }
+
+    .input-wrapper {
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      background: #f9fafb;
+      margin-bottom: 10px;
+    }
+
+    .input-wrapper input {
+      border: none;
+      outline: none;
+      background: transparent;
+      flex: 1;
+      font-size: 0.9rem;
+      padding: 10px 0;
+    }
+
+    .btn-primary-gt {
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      padding: 11px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #0a8239;
+      color: #ffffff;
+      margin-top: 4px;
+    }
+
+    .btn-primary-gt:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    .btn-primary-gt:hover:enabled {
+      background: #08652e;
+    }
+
+    .status-msg {
+      min-height: 18px;
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+
+    .small-note {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 10px;
+      line-height: 1.45;
+    }
+
+    .bottom-row {
+      margin-top: 16px;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    .bottom-row a {
+      color: #0a8239;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .bottom-row a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 22px 18px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-wrapper">
+    <div class="auth-card">
+
+      <div class="auth-logo">
+        <img src="img/logo.png" alt="GT Mall">
+        <span>GT Mall</span>
+      </div>
+
+      <div class="tab-row">
+        <button id="tab-login" class="tab-btn active" type="button">Log in</button>
+        <button id="tab-signup" class="tab-btn" type="button">Sign up</button>
+      </div>
+
+      <div id="title-login" class="auth-title">Welcome back</div>
+      <div id="subtitle-login" class="auth-subtitle">
+        Log in with your email or Google.
+      </div>
+      <div id="title-signup" class="auth-title" style="display:none;">Create your account</div>
+      <div id="subtitle-signup" class="auth-subtitle" style="display:none;">
+        Sign up to start shopping with GT Mall.
+      </div>
+
+      <button type="button" class="btn-google" id="google-btn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+        <span>Continue with Google</span>
+      </button>
+
+      <div class="or-row">
+        <span class="line"></span>
+        <span>or</span>
+        <span class="line"></span>
+      </div>
+
+      <!-- LOGIN PANE -->
+      <div id="login-pane">
+        <div class="field-label">Email</div>
+        <div class="input-wrapper">
+          <input type="email" id="login-email" placeholder="you@example.com">
+        </div>
+
+        <div class="field-label">Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="login-password" placeholder="Your password">
+        </div>
+
+        <button id="login-submit-btn" class="btn-primary-gt" type="button">
+          Log in
+        </button>
+      </div>
+
+      <!-- SIGNUP PANE -->
+      <div id="signup-pane" style="display:none;">
+        <div class="field-label">Full Name</div>
+        <div class="input-wrapper">
+          <input type="text" id="signup-name" placeholder="Your name">
+        </div>
+
+        <div class="field-label">Email</div>
+        <div class="input-wrapper">
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+
+        <div class="field-label">Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="signup-password" placeholder="Minimum 6 characters">
+        </div>
+
+        <div class="field-label">Confirm Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="signup-confirm" placeholder="Re-enter password">
+        </div>
+
+        <button id="signup-submit-btn" class="btn-primary-gt" type="button">
+          Create account
+        </button>
+      </div>
+
+      <div id="status-msg" class="status-msg"></div>
+
+      <div class="small-note">
+        After sign up, we send a verification email.  
+        You must verify before logging in with email & password.
+      </div>
+
+      <div class="bottom-row">
+        <a href="index.html">← Back to GT Mall</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // helper
+    function setStatus(msg, color) {
+      const el = document.getElementById("status-msg");
+      el.textContent = msg || "";
+      el.style.color = color || "#6b7280";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const tabLogin   = document.getElementById("tab-login");
+      const tabSignup  = document.getElementById("tab-signup");
+      const loginPane  = document.getElementById("login-pane");
+      const signupPane = document.getElementById("signup-pane");
+      const titleLogin = document.getElementById("title-login");
+      const subLogin   = document.getElementById("subtitle-login");
+      const titleSignup = document.getElementById("title-signup");
+      const subSignup   = document.getElementById("subtitle-signup");
+
+      const googleBtn  = document.getElementById("google-btn");
+
+      const loginEmail    = document.getElementById("login-email");
+      const loginPassword = document.getElementById("login-password");
+      const loginBtn      = document.getElementById("login-submit-btn");
+
+      const signupName     = document.getElementById("signup-name");
+      const signupEmail    = document.getElementById("signup-email");
+      const signupPassword = document.getElementById("signup-password");
+      const signupConfirm  = document.getElementById("signup-confirm");
+      const signupBtn      = document.getElementById("signup-submit-btn");
+
+      function showLogin() {
+        tabLogin.classList.add("active");
+        tabSignup.classList.remove("active");
+        loginPane.style.display = "";
+        signupPane.style.display = "none";
+        titleLogin.style.display = "";
+        subLogin.style.display = "";
+        titleSignup.style.display = "none";
+        subSignup.style.display = "none";
+        setStatus("", "");
+      }
+
+      function showSignup() {
+        tabSignup.classList.add("active");
+        tabLogin.classList.remove("active");
+        signupPane.style.display = "";
+        loginPane.style.display = "none";
+        titleLogin.style.display = "none";
+        subLogin.style.display = "none";
+        titleSignup.style.display = "";
+        subSignup.style.display = "";
+        setStatus("", "");
+      }
+
+      tabLogin.addEventListener("click", showLogin);
+      tabSignup.addEventListener("click", showSignup);
+
+      // Google login → uses googleLogin() from login.js
+      googleBtn.addEventListener("click", () => {
+        setStatus("Opening Google login…", "#6b7280");
+        googleLogin();
+      });
+
+      // Email login
+      loginBtn.addEventListener("click", () => {
+        const email = loginEmail.value.trim();
+        const pass  = loginPassword.value.trim();
+
+        if (!email) return setStatus("Enter your email.", "#dc2626");
+        if (!pass)  return setStatus("Enter your password.", "#dc2626");
+
+        setStatus("Logging in...", "#6b7280");
+        loginBtn.disabled = true;
+
+        loginWithEmail(email, pass); // defined in login.js
+
+        setTimeout(() => {
+          loginBtn.disabled = false;
+        }, 2000);
+      });
+
+      // Sign up
+      signupBtn.addEventListener("click", () => {
+        const name = signupName.value.trim();
+        const email = signupEmail.value.trim();
+        const pass  = signupPassword.value.trim();
+        const conf  = signupConfirm.value.trim();
+
+        if (!name)   return setStatus("Enter your name.", "#dc2626");
+        if (!email)  return setStatus("Enter your email.", "#dc2626");
+        if (!pass || pass.length < 6)
+          return setStatus("Password must be at least 6 chars.", "#dc2626");
+        if (pass !== conf)
+          return setStatus("Passwords do not match.", "#dc2626");
+
+        setStatus("Creating your account...", "#6b7280");
+        signupBtn.disabled = true;
+
+        signupWithEmail(name, email, pass); // defined in login.js
+
+        setTimeout(() => {
+          signupBtn.disabled = false;
+        }, 4000);
+      });
+    });
+  </script>
+</body>
+</html>

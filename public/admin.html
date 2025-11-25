@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard | GT Mall</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="padding-top:0;">
+
+  <!-- SIDEBAR -->
+  <div class="admin-sidebar">
+    <div class="p-3 border-bottom">
+      <h5 class="mb-0">GT Mall Admin</h5>
+    </div>
+    <a href="admin.html"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
+    <a href="admin_orders.html"><i class="fa-solid fa-box me-2"></i>Orders</a>
+    <a href="admin_products.html"><i class="fa-solid fa-tag me-2"></i>Products</a>
+    <a href="admin_users.html"><i class="fa-solid fa-users me-2"></i>Users</a>
+    <hr class="text-white opacity-50">
+    <a href="index.html"><i class="fa-solid fa-store me-2"></i>Back to Store</a>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="admin-content">
+    <h2 class="mb-4">Dashboard</h2>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h6 class="text-muted">Total Orders</h6>
+            <h3 id="admTotalOrders">0</h3>
+            <small class="text-success">Last: <span id="admLastOrderId">—</span></small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h6 class="text-muted">Total Revenue (Local)</h6>
+            <h3>₹<span id="admTotalRevenue">0</span></h3>
+            <small class="text-muted">From sample data</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h6 class="text-muted">Registered Users (Local)</h6>
+            <h3 id="admTotalUsers">1</h3>
+            <small class="text-muted">Google/Email logins (approx)</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-light">
+        <strong>Recent Activity</strong>
+      </div>
+      <div class="card-body">
+        <p class="mb-1">• Uses <code>localStorage.lastOrder</code> to show last order summary.</p>
+        <p class="mb-1">• Later we can connect this with real MongoDB + Razorpay webhooks.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const lastOrderRaw = localStorage.getItem("lastOrder");
+      const totalOrdersEl = document.getElementById("admTotalOrders");
+      const lastOrderIdEl = document.getElementById("admLastOrderId");
+      const totalRevenueEl = document.getElementById("admTotalRevenue");
+      const totalUsersEl = document.getElementById("admTotalUsers");
+
+      let totalOrders = 0;
+      let totalRevenue = 0;
+      let lastOrderId = "—";
+
+      if (lastOrderRaw) {
+        const o = JSON.parse(lastOrderRaw);
+        totalOrders = 1;
+        totalRevenue = o.amount || 0;
+        lastOrderId = o.orderId || "—";
+      }
+
+      totalOrdersEl.textContent = totalOrders;
+      totalRevenueEl.textContent = totalRevenue;
+      lastOrderIdEl.textContent = lastOrderId;
+
+      // very rough user count from localStorage
+      const userEmail = localStorage.getItem("userEmail");
+      totalUsersEl.textContent = userEmail ? 1 : 0;
+    });
+  </script>
+</body>
+</html>

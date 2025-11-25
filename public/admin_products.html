@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Products | GT Mall</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="padding-top:0;">
+
+  <div class="admin-sidebar">
+    <div class="p-3 border-bottom">
+      <h5 class="mb-0">GT Mall Admin</h5>
+    </div>
+    <a href="admin.html"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
+    <a href="admin_orders.html"><i class="fa-solid fa-box me-2"></i>Orders</a>
+    <a href="admin_products.html"><i class="fa-solid fa-tag me-2"></i>Products</a>
+    <a href="admin_users.html"><i class="fa-solid fa-users me-2"></i>Users</a>
+    <hr class="text-white opacity-50">
+    <a href="index.html"><i class="fa-solid fa-store me-2"></i>Back to Store</a>
+  </div>
+
+  <div class="admin-content">
+    <h2 class="mb-3">Products</h2>
+
+    <div class="card mb-4 border-0 shadow-sm">
+      <div class="card-header bg-light">
+        <strong>Existing Products (Static)</strong>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm table-striped">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Product</th>
+              <th>Price (₹)</th>
+              <th>Image</th>
+            </tr>
+          </thead>
+          <tbody id="adminProductsTableBody">
+            <!-- JS fills -->
+          </tbody>
+        </table>
+        <small class="text-muted">
+          These products come from <code>PRODUCTS</code> in <code>js/products.js</code>.  
+          Later we can make this editable + save to database.
+        </small>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-light">
+        <strong>Add New Product (UI only)</strong>
+      </div>
+      <div class="card-body">
+        <form class="row g-2" onsubmit="return false;">
+          <div class="col-md-3">
+            <input type="text" id="newProdName" class="form-control form-control-sm" placeholder="Product name">
+          </div>
+          <div class="col-md-2">
+            <input type="number" id="newProdPrice" class="form-control form-control-sm" placeholder="Price">
+          </div>
+          <div class="col-md-4">
+            <input type="text" id="newProdImg" class="form-control form-control-sm" placeholder="Image URL or path">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-success btn-sm w-100" id="btnAddDummyProduct">
+              Add (local only)
+            </button>
+          </div>
+        </form>
+        <small class="text-muted d-block mt-2">
+          This just adds a row in the table using localStorage.  
+          It does not change the public Shop page yet.
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+  <script src="js/products.js"></script>
+  <script>
+    function renderAdminProducts() {
+      const tbody = document.getElementById("adminProductsTableBody");
+      tbody.innerHTML = "";
+
+      // base products from PRODUCTS
+      PRODUCTS.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>${p.price}</td>
+          <td><code>${p.img}</code></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // custom dummy products stored in localStorage
+      const extraRaw = localStorage.getItem("adminExtraProducts");
+      if (extraRaw) {
+        const extra = JSON.parse(extraRaw);
+        extra.forEach((p, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>EX-${idx + 1}</td>
+            <td>${p.name}</td>
+            <td>${p.price}</td>
+            <td><code>${p.img}</code></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderAdminProducts();
+
+      document.getElementById("btnAddDummyProduct").addEventListener("click", () => {
+        const name = document.getElementById("newProdName").value.trim();
+        const price = Number(document.getElementById("newProdPrice").value);
+        const img = document.getElementById("newProdImg").value.trim();
+
+        if (!name || !price || !img) {
+          alert("Fill product name, price, image.");
+          return;
+        }
+
+        const extraRaw = localStorage.getItem("adminExtraProducts");
+        const extra = extraRaw ? JSON.parse(extraRaw) : [];
+        extra.push({ name, price, img });
+        localStorage.setItem("adminExtraProducts", JSON.stringify(extra));
+
+        document.getElementById("newProdName").value = "";
+        document.getElementById("newProdPrice").value = "";
+        document.getElementById("newProdImg").value = "";
+
+        renderAdminProducts();
+      });
+    });
+  </script>
+</body>
+</html>
