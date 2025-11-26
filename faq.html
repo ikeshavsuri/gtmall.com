@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ | GT Mall</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <!-- STATIC NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="assets/img/logo.png" alt="GT Mall" style="height: 32px;" class="me-2" />
+        <span class="fw-bold">GT Mall</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Shop</a></li>
+          <li class="nav-item"><a class="nav-link" href="my_orders.html">My Orders</a></li>
+          <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+          <li class="nav-item"><a class="nav-link" href="faq.html">FAQ</a></li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="cart.html">
+              Cart <span id="navCartCount" class="badge bg-success ms-1">0</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="btn btn-outline-success ms-lg-2" href="login_signup.html">Login / Signup</a>
+          </li>
+
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE CONTENT -->
+  <main class="py-5">
+    <div class="container">
+      <h1 class="mb-3">Frequently Asked Questions</h1>
+      <p class="text-muted mb-4">
+        Here are some common questions about shopping on GT Mall.  
+        If you still have doubts, feel free to contact us anytime.
+      </p>
+
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="accordion" id="faqAccordion">
+
+            <!-- Q1 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqHeadingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseOne">
+                  1. How do I place an order on GT Mall?
+                </button>
+              </h2>
+              <div id="faqCollapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Browse products on the <a href="shop.html">Shop</a> page, click “Add to Cart” on the product you like,
+                  then go to your <a href="cart.html">Cart</a>, review items and proceed to checkout.
+                </div>
+              </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqHeadingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwo">
+                  2. Do I need an account to order?
+                </button>
+              </h2>
+              <div id="faqCollapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Yes, you need to create an account with your email or Google login. This helps you view order history,
+                  manage addresses and track your orders easily.
+                </div>
+              </div>
+            </div>
+
+            <!-- Q3 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqHeadingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThree">
+                  3. What payment methods are supported?
+                </button>
+              </h2>
+              <div id="faqCollapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Currently we are testing integration with secure payment gateways. In the final production website, 
+                  you will be able to pay using UPI, cards, net banking and wallets via trusted providers like Razorpay or Cashfree.
+                </div>
+              </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqHeadingFour">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFour">
+                  4. How can I track my order?
+                </button>
+              </h2>
+              <div id="faqCollapseFour" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  After login, go to the <a href="my_orders.html">My Orders</a> page.  
+                  All your past and current orders will be listed with status.  
+                  We are also working on adding courier tracking details for each shipment.
+                </div>
+              </div>
+            </div>
+
+            <!-- Q5 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqHeadingFive">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFive">
+                  5. What is your return & refund policy?
+                </button>
+              </h2>
+              <div id="faqCollapseFive" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  We accept returns only if the product is damaged, defective or wrong item delivered.
+                  For full details, please read our <a href="refund.html">Return &amp; Refund Policy</a>.
+                </div>
+              </div>
+            </div>
+
+            <!-- Q6 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqHeadingSix">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSix">
+                  6. Is my data safe on GT Mall?
+                </button>
+              </h2>
+              <div id="faqCollapseSix" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  We use secure authentication and trusted payment gateways. Your card/UPI details are processed
+                  by the payment provider and are not stored on GT Mall servers. Read our
+                  <a href="privacy.html">Privacy Policy</a> for more.
+                </div>
+              </div>
+            </div>
+
+            <!-- Q7 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqHeadingSeven">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSeven">
+                  7. How do I contact support?
+                </button>
+              </h2>
+              <div id="faqCollapseSeven" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  You can email us at <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a> or message on WhatsApp
+                  at +91-9241970722. You can also use the details on our <a href="contact.html">Contact</a> page.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-0">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Still need help?</h5>
+              <p class="mb-2">
+                If your question is not listed here, feel free to reach out.
+              </p>
+              <p class="mb-1"><strong>Email:</strong> <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a></p>
+              <p class="mb-1"><strong>WhatsApp:</strong> +91-9241970722</p>
+              <p class="small mb-0">
+                Support Hours: Mon–Sat, 10:00 AM – 7:00 PM (IST)
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-top py-3 mt-auto">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <div class="small text-muted">
+        &copy; <span id="yearSpan"></span> GT Mall. All rights reserved.
+      </div>
+      <div class="small">
+        <a href="about.html" class="text-decoration-none me-3">About</a>
+        <a href="contact.html" class="text-decoration-none me-3">Contact</a>
+        <a href="faq.html" class="text-decoration-none me-3">FAQ</a>
+        <a href="terms.html" class="text-decoration-none me-3">Terms</a>
+        <a href="privacy.html" class="text-decoration-none me-3">Privacy</a>
+        <a href="refund.html" class="text-decoration-none">Refund Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Footer year
+    document.getElementById("yearSpan").textContent = new Date().getFullYear();
+
+    // Cart badge from localStorage
+    try {
+      const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      const count = items.reduce((t, x) => t + (x.quantity || 1), 0);
+      const badge = document.getElementById("navCartCount");
+      if (badge) badge.textContent = count;
+    } catch (e) {}
+  </script>
+
+</body>
+</html>
