@@ -3,60 +3,168 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Return &amp; Refund Policy | GT Mall</title>
+  <title>Return & Refund Policy | GT Mall</title>
 
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Main CSS -->
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-  <header id="mainHeader"></header>
 
+  <!-- STATIC NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="assets/img/logo.png" alt="GT Mall" style="height: 32px;" class="me-2" />
+        <span class="fw-bold">GT Mall</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Shop</a></li>
+          <li class="nav-item"><a class="nav-link" href="my_orders.html">My Orders</a></li>
+          <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="cart.html">
+              Cart <span id="navCartCount" class="badge bg-success ms-1">0</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="btn btn-outline-success ms-lg-2" href="login_signup.html">Login / Signup</a>
+          </li>
+
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE CONTENT -->
   <main class="py-5">
     <div class="container">
       <h1 class="mb-3">Return &amp; Refund Policy</h1>
-      <p class="text-muted">Last updated: 26 November 2025</p>
+      <p class="text-muted mb-4">Last updated: 26 November 2025</p>
 
-      <h5>1. Eligibility for return</h5>
-      <p>
-        Products may be eligible for return if they are received in damaged,
-        defective or wrong condition. In such cases, you must raise a request
-        within 7 days of delivery with photos/videos as proof.
-      </p>
+      <section class="mb-4">
+        <h5>1. Eligibility for Return</h5>
+        <p>
+          We accept returns only in the following cases:
+        </p>
+        <ul>
+          <li>Product received in damaged condition</li>
+          <li>Wrong item received (different model / color than ordered)</li>
+          <li>Product is not working on arrival (dead on arrival)</li>
+        </ul>
+        <p>
+          You must raise a return request within <strong>7 days</strong> of delivery with clear photos / videos
+          showing the issue.
+        </p>
+      </section>
 
-      <h5>2. Conditions</h5>
-      <ul>
-        <li>Product must be unused and in original packaging (where possible).</li>
-        <li>All accessories, manuals and tags should be returned.</li>
-        <li>Final approval of return is subject to inspection.</li>
-      </ul>
+      <section class="mb-4">
+        <h5>2. Conditions for Return</h5>
+        <ul>
+          <li>Product should be in original condition as received.</li>
+          <li>All accessories, manuals, charging cables, and box (if available) should be returned.</li>
+          <li>Physical damage due to mishandling is not covered.</li>
+        </ul>
+      </section>
 
-      <h5>3. Refund process</h5>
-      <p>
-        Once your return is approved and product is received back, the refund is
-        initiated to your original payment method (bank account / card / wallet)
-        within 5–7 working days, depending on your bank or payment provider.
-      </p>
+      <section class="mb-4">
+        <h5>3. Refund Process</h5>
+        <p>
+          Once your returned product is received and inspected, we will notify you about the approval or rejection.
+          If approved, your refund will be initiated to the original payment method (bank account / card / wallet).
+        </p>
+        <p>
+          Refund timelines:
+        </p>
+        <ul>
+          <li>UPI / Wallet – usually within 2–4 working days</li>
+          <li>Bank Cards / Netbanking – usually within 5–7 working days</li>
+        </ul>
+      </section>
 
-      <h5>4. Non-returnable items</h5>
-      <p>
-        Certain items may not be eligible for return due to hygiene or 
-        manufacturer policies. Such information will be clearly mentioned on 
-        the product page wherever applicable.
-      </p>
+      <section class="mb-4">
+        <h5>4. Order Cancellation</h5>
+        <p>
+          Orders can be cancelled only before they are shipped. Once shipped, you can request a return after delivery
+          based on the conditions mentioned above.
+        </p>
+      </section>
 
-      <h5>5. Contact for returns</h5>
-      <p>
-        To raise a return or refund request, please contact:<br />
-        Email: <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a><br />
-        Please include your order ID, contact number and a brief description
-        of the issue.
-      </p>
+      <section class="mb-4">
+        <h5>5. Non-Returnable Items</h5>
+        <p>
+          Certain items may not be eligible for return due to hygiene or manufacturer policies. 
+          Such information, if applicable, will be mentioned on the product page.
+        </p>
+      </section>
+
+      <section>
+        <h5>6. How to Raise a Return / Refund Request</h5>
+        <p>
+          To raise a return or refund request, please contact our support with your:
+        </p>
+        <ul>
+          <li>Order ID</li>
+          <li>Registered mobile number / email</li>
+          <li>Clear description of the issue</li>
+          <li>Photos / video of the product and packaging</li>
+        </ul>
+        <p class="mb-1">
+          <strong>Email:</strong> 
+          <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a>
+        </p>
+        <p class="mb-1">
+          <strong>WhatsApp:</strong> +91-9241970722
+        </p>
+        <p class="small mb-0">
+          GT Mall (Keshav Kumar – Founder &amp; CEO)<br />
+          House no-15, Kamathan (Ambaicharua)<br />
+          Khagaria, Bihar – 848203, India
+        </p>
+      </section>
     </div>
   </main>
 
-  <footer id="mainFooter" class="mt-auto"></footer>
+  <!-- FOOTER -->
+  <footer class="border-top py-3 mt-auto">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <div class="small text-muted">
+        &copy; <span id="yearSpan"></span> GT Mall. All rights reserved.
+      </div>
+      <div class="small">
+        <a href="about.html" class="text-decoration-none me-3">About</a>
+        <a href="contact.html" class="text-decoration-none me-3">Contact</a>
+        <a href="terms.html" class="text-decoration-none me-3">Terms</a>
+        <a href="privacy.html" class="text-decoration-none me-3">Privacy</a>
+        <a href="refund.html" class="text-decoration-none">Refund Policy</a>
+      </div>
+    </div>
+  </footer>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/navbar.js"></script>
+  <script>
+    // Footer year
+    document.getElementById("yearSpan").textContent = new Date().getFullYear();
+
+    // Cart badge from localStorage
+    try {
+      const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      const count = items.reduce((t, x) => t + (x.quantity || 1), 0);
+      const badge = document.getElementById("navCartCount");
+      if (badge) badge.textContent = count;
+    } catch (e) {}
+  </script>
 </body>
 </html>
