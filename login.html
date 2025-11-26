@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | GT Mall</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script>
+   const firebaseConfig = {
+  apiKey: "AIzaSyB08MQegakweUn5Qtc-w95NQztn0z1M3xQ",
+  authDomain: "gtmall-7b220.firebaseapp.com",
+  projectId: "gtmall-7b220",
+  storageBucket: "gtmall-7b220.firebasestorage.app",
+  messagingSenderId: "303908707758",
+  appId: "1:303908707758:web:8bb9127fcc92f308c93c3f",
+  measurementId: "G-HQTXK2NTQ3"
+};
+    firebase.initializeApp(firebaseConfig);
+  </script>
+</head>
+<body class="login-body">
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="assets/img/logo.png" alt="GT Mall">
+        <span>GT Mall</span>
+      </div>
+
+      <div class="tab-row">
+        <button id="tab-login" class="tab-btn active" type="button">Log in</button>
+        <button id="tab-signup" class="tab-btn" type="button">Sign up</button>
+      </div>
+
+      <div id="title-login" class="auth-title">Welcome back</div>
+      <div id="subtitle-login" class="auth-subtitle">
+        Log in with your email or Google.
+      </div>
+      <div id="title-signup" class="auth-title" style="display:none;">Create your account</div>
+      <div id="subtitle-signup" class="auth-subtitle" style="display:none;">
+        Sign up to start shopping with GT Mall.
+      </div>
+
+      <button type="button" class="btn-google" id="google-btn">
+        <span>Continue with Google</span>
+      </button>
+
+      <div class="or-row">
+        <span class="line"></span><span>or</span><span class="line"></span>
+      </div>
+
+      <div id="login-pane">
+        <div class="field-label">Email</div>
+        <div class="input-wrapper">
+          <input type="email" id="login-email" placeholder="you@example.com">
+        </div>
+        <div class="field-label">Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="login-password" placeholder="Your password">
+        </div>
+        <button id="login-submit-btn" class="btn-primary-gt" type="button">
+          Log in
+        </button>
+      </div>
+
+      <div id="signup-pane" style="display:none;">
+        <div class="field-label">Full Name</div>
+        <div class="input-wrapper">
+          <input type="text" id="signup-name" placeholder="Your name">
+        </div>
+        <div class="field-label">Email</div>
+        <div class="input-wrapper">
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        <div class="field-label">Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="signup-password" placeholder="Minimum 6 characters">
+        </div>
+        <div class="field-label">Confirm Password</div>
+        <div class="input-wrapper">
+          <input type="password" id="signup-confirm" placeholder="Re-enter password">
+        </div>
+        <button id="signup-submit-btn" class="btn-primary-gt" type="button">
+          Create account
+        </button>
+      </div>
+
+      <div id="status-msg" class="status-msg"></div>
+
+      <div class="small-note">
+        After sign up, we send a verification email.  
+        Verify before logging in with email & password.
+      </div>
+
+      <div class="bottom-row">
+        <a href="index.html">← Back to GT Mall</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/login.js"></script>
+</body>
+</html>
