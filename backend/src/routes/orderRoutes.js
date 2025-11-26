@@ -1,68 +1,71 @@
-
+// backend/src/routes/orderRoutes.js
 import express from "express";
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import { userFromHeaders, requireAdmin } from "../middleware_auth.js";
-import { Order } from "../models/Order.js";
+
+import Order from "../models/Order.js";
+import Address from "../models/Address.js";
 
 const router = express.Router();
 
-const razor = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// helper: get user identity from headers
+function getUserFromHeaders(req) {
+  const userId = req.headers["x-user-id"];
+  const userEmail = req.headers["x-user-email"];
+  const userName = req.headers["x-user-name"] || "";
 
-router.post("/payment/create-order", userFromHeaders, async (req, res) => {
-  const { amount } = req.body;
-  const amtPaise = Math.round((amount || 0) * 100);
-  try {
-    const order = await razor.orders.create({ amount: amtPaise, currency: "INR", receipt: "gtm_" + Date.now() });
-    res.json(order);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to create order" });
-  }
-});
+  return { userId, userEmail, userName };
+}
 
-router.post("/payment/verify", userFromHeaders, async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, address, cartItems } = req.body;
+// ---------- ADDRESS APIs ----------
+
+// GET /api/addresses/mine  → current user ke saare addresses
+router.get("/addresses/mine", async (req, res) => {
   try {
-    const hmac = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest("hex");
-    if (hmac !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: "Invalid signature" });
+    const { userId, userEmail } = getUserFromHeaders(req);
+    if (!userId || !userEmail) {
+      return res.status(401).json({ message: "Not logged in" });
     }
-    const total = (cartItems || []).reduce((s,i)=>s + (i.price||0)*(i.quantity||1), 0);
-    const order = await Order.create({
-      userId: req.user.firebaseUid,
-      items: (cartItems || []).map(i => ({
-        productId: i.id, name: i.name, price: i.price, quantity: i.quantity, image: i.img
-      })),
-      amount: total,
-      paymentStatus: "paid",
-      paymentId: razorpay_payment_id,
-      razorpayOrderId: razorpay_order_id,
-      razorpaySignature,
-      address,
-      status: "Processing"
-    });
-    res.json({ success: true, orderId: order._id });
+
+    const addresses = await Address.find({ userId }).sort({ isDefault: -1, createdAt: 1 });
+    return res.json(addresses);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error fetching addresses:", err);
+    return res.status(500).json({ message: "Failed to load addresses" });
   }
 });
 
-router.get("/orders/mine", userFromHeaders, async (req, res) => {
-  const orders = await Order.find({ userId: req.user.firebaseUid }).sort({ createdAt: -1 });
-  res.json(orders);
-});
+// POST /api/addresses  → new address save
+router.post("/addresses", async (req, res) => {
+  try {
+    const { userId, userEmail } = getUserFromHeaders(req);
+    if (!userId || !userEmail) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
 
-router.get("/admin/orders", userFromHeaders, requireAdmin, async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 });
-  res.json(orders);
-});
+    const { address, isDefault } = req.body;
+    if (!address || !address.name || !address.mobile || !address.pin) {
+      return res.status(400).json({ message: "Invalid address data" });
+    }
 
-export default router;
+    // agar isDefault true hai → pehle baaki addresses se default hata do
+    if (isDefault) {
+      await Address.updateMany(
+        { userId },
+        { $set: { isDefault: false } }
+      );
+    }
+
+    const doc = await Address.create({
+      userId,
+      userEmail,
+      ...address,
+      isDefault: !!isDefault
+    });
+
+    return res.status(201).json({ success: true, address: doc });
+  } catch (err) {
+    console.error("Error saving address:", err);
+    return res.status(500).json({ message: "Failed to save address" });
+  }
+});
