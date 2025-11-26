@@ -1,70 +1,203 @@
-// backend/src/server.js
+// server.js (FINAL VERSION)
 
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import { connectDB } from "./config/db.js";
-import orderRoutes from "./routes/orderRoutes.js";
-
-dotenv.config();
+require("dotenv").config();
+const express  = require("express");
+const path     = require("path");
+const Razorpay = require("razorpay");
+const crypto   = require("crypto");
+const cors     = require("cors");
+const mongoose = require("mongoose");
 
 const app = express();
-
-// ---------- MIDDLEWARES ----------
-
-// Parse JSON body
 app.use(express.json());
+app.use(cors());
 
-// CORS setup
-const allowedOrigins = [
-  process.env.CLIENT_ORIGIN,           // e.g. https://gtmall.run.place
-  "https://gtmall.run.place",          // hard-coded safety
-  "http://localhost:5500",             // local file server (VS Code Live Server)
-  "http://localhost:3000",             // just in case for local frontend
-].filter(Boolean);
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow non-browser / curl / Postman (no origin)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      console.warn("Blocked CORS origin:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "x-user-id",
-      "x-user-email",
-      "x-user-name",
-      "Authorization",
-    ],
+// -------------------- MONGODB CONNECT --------------------
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
   })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB error:", err));
+
+// -------------------- ADDRESS MODEL --------------------
+const addressSchema = new mongoose.Schema(
+  {
+    userId:    { type: String },          // optional: Firebase UID
+    userEmail: { type: String, required: true },
+
+    name:      { type: String, required: true },
+    mobile:    { type: String, required: true },
+    altMobile: { type: String },
+    email:     { type: String, required: true },
+
+    pin:       { type: String, required: true },
+    locality:  { type: String, required: true },
+    areaStreet:{ type: String, required: true },
+    city:      { type: String, required: true },
+    state:     { type: String, required: true },
+    landmark:  { type: String },
+
+    type:      { type: String, default: "Home" },
+    isDefault: { type: Boolean, default: false }
+  },
+  { timestamps: true }
 );
 
-// Handle preflight requests
-app.options("*", cors());
+const Address = mongoose.model("Address", addressSchema);
 
-// ---------- DB CONNECTION ----------
-connectDB();
+// -------------------- STATIC FILES --------------------
+app.use(express.static(path.join(__dirname, "public")));
 
-// ---------- ROUTES ----------
-app.get("/", (req, res) => {
-  res.send("GT Mall backend running");
+// -------------------- HELPERS --------------------
+function getUserFromHeaders(req) {
+  return {
+    userId:    req.headers["x-user-id"] || null,
+    userEmail: req.headers["x-user-email"] || null,
+    userName:  req.headers["x-user-name"] || null
+  };
+}
+
+// -------------------- ADDRESS APIs --------------------
+
+// GET  /api/addresses/mine  -> current user ke saare addresses
+app.get("/api/addresses/mine", async (req, res) => {
+  try {
+    const { userEmail } = getUserFromHeaders(req);
+    if (!userEmail) {
+      return res.status(401).json({ message: "Auth required" });
+    }
+
+    const addresses = await Address.find({ userEmail }).sort({
+      isDefault: -1,
+      createdAt: 1
+    });
+
+    res.json(addresses);
+  } catch (err) {
+    console.error("GET /api/addresses/mine error:", err);
+    res.status(500).json({ message: "Failed to load addresses" });
+  }
 });
 
-// All API routes
-app.use("/api", orderRoutes);
+// POST /api/addresses  -> naya address save
+app.post("/api/addresses", async (req, res) => {
+  try {
+    const { userId, userEmail } = getUserFromHeaders(req);
+    if (!userEmail) {
+      return res.status(401).json({ message: "Auth required" });
+    }
 
-// ---------- START SERVER ----------
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log("Backend listening on port " + port);
-  console.log("Allowed origins:", allowedOrigins);
+    const { address, isDefault } = req.body;
+    if (
+      !address ||
+      !address.name ||
+      !address.mobile ||
+      !address.pin ||
+      !address.locality ||
+      !address.areaStreet ||
+      !address.city ||
+      !address.state ||
+      !address.email
+    ) {
+      return res.status(400).json({ message: "Invalid address data" });
+    }
+
+    // Agar is address ko default bana rahe ho to pehle purane ko default se hata do
+    if (isDefault) {
+      await Address.updateMany(
+        { userEmail },
+        { $set: { isDefault: false } }
+      );
+    }
+
+    const doc = await Address.create({
+      userId,
+      userEmail,
+      ...address,
+      isDefault: !!isDefault
+    });
+
+    res.status(201).json({ success: true, address: doc });
+  } catch (err) {
+    console.error("POST /api/addresses error:", err);
+    res.status(500).json({ message: "Failed to save address" });
+  }
 });
+
+// -------------------- RAZORPAY INIT --------------------
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+// Create order
+app.post("/api/create-order", async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount) {
+      return res.status(400).json({ error: "Amount is required" });
+    }
+
+    const options = {
+      amount: Math.round(amount * 100),
+      currency: "INR",
+      receipt: "gtm_" + Date.now()
+    };
+
+    const order = await razorpay.orders.create(options);
+    res.json(order);
+
+  } catch (error) {
+    console.error("Order Create Error:", error);
+    res.status(500).json({ error: "Order creation failed" });
+  }
+});
+
+// Verify payment
+app.post("/api/verify-payment", (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      address,
+      cartItems
+    } = req.body;
+
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign)
+      .digest("hex");
+
+    if (expectedSign === razorpay_signature) {
+      console.log("Payment Verified → ORDER:", razorpay_order_id);
+
+      // TODO: yahan Order ko MongoDB me save bhi kar sakte ho (future step)
+
+      return res.json({
+        success: true,
+        orderId: razorpay_order_id
+      });
+    }
+
+    res.json({ success: false });
+
+  } catch (error) {
+    console.error("Verify Error:", error);
+    res.status(500).json({ error: "Verification error" });
+  }
+});
+
+// SPA style fallback
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// -------------------- START SERVER --------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`GT Mall running on port ${PORT}`));
