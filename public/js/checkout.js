@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 3c) Razorpay options
         const options = {
-          key: "RAZORPAY_KEY_ID_HERE", // 👈 yahan apna Razorpay key_id daalo
+          key: "rzp_test_RjwJyS3ad0hBEe", // 👈 yahan apna Razorpay key_id daalo
           amount: order.amount,
           currency: order.currency,
           name: "GT Mall",

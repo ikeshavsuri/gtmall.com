@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Razorpay Test - GT Mall</title>
+</head>
+<body>
+  <h2>Razorpay Test Page</h2>
+  <p>Amount: ₹10 (test)</p>
+
+  <!-- Button -->
+  <button id="rzp-button1">Pay ₹10</button>
+
+  <!-- Razorpay JS -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <script>
+    // 👇 YAHAN APNA TEST KEY ID DAALO
+    const RAZORPAY_KEY_ID = "rzp_test_RjwJyS3ad0hBEe"; 
+
+    document.getElementById("rzp-button1").addEventListener("click", function (e) {
+      e.preventDefault();
+
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: "1000", // 10 rupees = 1000 paise
+        currency: "INR",
+        name: "GT Mall",
+        description: "Test Payment",
+        handler: function (response) {
+          alert("Payment successful! Payment ID: " + response.razorpay_payment_id);
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+
+      const rzp1 = new Razorpay(options);
+      rzp1.open();
+    });
+  </script>
+</body>
+</html>
