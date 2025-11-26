@@ -5,74 +5,207 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy | GT Mall</title>
 
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Main CSS -->
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-  <header id="mainHeader"></header>
 
+  <!-- STATIC NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="assets/img/logo.png" alt="GT Mall" style="height: 32px;" class="me-2" />
+        <span class="fw-bold">GT Mall</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Shop</a></li>
+          <li class="nav-item"><a class="nav-link" href="my_orders.html">My Orders</a></li>
+          <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="cart.html">
+              Cart <span id="navCartCount" class="badge bg-success ms-1">0</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="btn btn-outline-success ms-lg-2" href="login_signup.html">
+              Login / Signup
+            </a>
+          </li>
+
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE CONTENT -->
   <main class="py-5">
     <div class="container">
       <h1 class="mb-3">Privacy Policy</h1>
-      <p class="text-muted">
-        Last updated: 26 November 2025
-      </p>
+      <p class="text-muted mb-4">Last updated: 26 November 2025</p>
 
-      <h5>1. Information we collect</h5>
-      <p>
-        When you create an account or place an order on GT Mall, we may collect
-        information such as your name, email address, phone number, shipping
-        address and order details. Basic technical data such as IP address and
-        browser type may also be collected for security and analytics.
-      </p>
+      <section class="mb-4">
+        <h5>1. Introduction</h5>
+        <p>
+          At GT Mall, we respect your privacy and are committed to protecting your personal data.
+          This Privacy Policy explains how we collect, use and safeguard your information when you
+          use our website or place an order with us.
+        </p>
+      </section>
 
-      <h5>2. How we use your information</h5>
-      <ul>
-        <li>To create and manage your GT Mall account</li>
-        <li>To process orders, payments and refunds</li>
-        <li>To send important order updates and notifications</li>
-        <li>To improve our website and customer support</li>
-      </ul>
+      <section class="mb-4">
+        <h5>2. Information We Collect</h5>
+        <p>We may collect the following types of information:</p>
+        <ul>
+          <li><strong>Account details:</strong> name, email address, mobile number.</li>
+          <li>
+            <strong>Order details:</strong> shipping address, products ordered, payment status, 
+            transaction IDs (from payment gateway).
+          </li>
+          <li>
+            <strong>Technical data:</strong> IP address, browser type, device information and pages visited
+            (used for security and analytics).
+          </li>
+        </ul>
+      </section>
 
-      <h5>3. Payments</h5>
-      <p>
-        GT Mall uses trusted third-party payment gateways (such as Razorpay or
-        Cashfree) to process your payments. Your full card/UPI details are
-        handled securely by the payment provider and are not stored on our servers.
-      </p>
+      <section class="mb-4">
+        <h5>3. How We Use Your Information</h5>
+        <p>We use your information to:</p>
+        <ul>
+          <li>Create and manage your GT Mall account.</li>
+          <li>Process your orders, payments, returns and refunds.</li>
+          <li>Send important order updates and transactional emails/SMS.</li>
+          <li>Improve our website, products and customer support.</li>
+          <li>Prevent fraudulent activity and ensure website security.</li>
+        </ul>
+      </section>
 
-      <h5>4. Cookies</h5>
-      <p>
-        We may use cookies to keep you logged in, remember your cart and improve
-        website performance. You can clear or disable cookies from your browser
-        settings, but some features may not work correctly.
-      </p>
+      <section class="mb-4">
+        <h5>4. Payments and Security</h5>
+        <p>
+          We use trusted payment gateways (such as Razorpay or Cashfree) to process your payments securely.
+          Your full card/UPI details are handled by the payment provider and are <strong>not stored</strong> 
+          on GT Mall servers.
+        </p>
+      </section>
 
-      <h5>5. Data sharing</h5>
-      <p>
-        We do not sell your personal information. We may share limited data with
-        service providers such as delivery partners, payment gateways and
-        analytics tools, only for operating and improving GT Mall.
-      </p>
+      <section class="mb-4">
+        <h5>5. Cookies</h5>
+        <p>
+          Our website may use cookies or similar technologies to:
+        </p>
+        <ul>
+          <li>Keep you logged in to your account.</li>
+          <li>Remember your cart and recently viewed items.</li>
+          <li>Measure basic traffic and usage analytics.</li>
+        </ul>
+        <p>
+          You can clear or disable cookies from your browser settings, but some features of the site may not
+          work correctly if cookies are disabled.
+        </p>
+      </section>
 
-      <h5>6. Your rights</h5>
-      <p>
-        You can request correction or deletion of your account data by contacting
-        us at <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a>.
-      </p>
+      <section class="mb-4">
+        <h5>6. Data Sharing</h5>
+        <p>
+          We do <strong>not</strong> sell your personal information. We may share your data only with:
+        </p>
+        <ul>
+          <li>Delivery partners, to ship your orders.</li>
+          <li>Payment gateways, to process secure payments.</li>
+          <li>Service providers helping us with hosting, analytics or support.</li>
+        </ul>
+        <p>
+          These partners are required to protect your data and use it only for the specific services they provide.
+        </p>
+      </section>
 
-      <h5>7. Contact</h5>
-      <p>
-        For any privacy-related questions, please contact:<br />
-        <strong>Keshav Kumar</strong> – Founder &amp; CEO, GT Mall<br />
-        Email: <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a>
-      </p>
+      <section class="mb-4">
+        <h5>7. Data Retention</h5>
+        <p>
+          We keep your information for as long as necessary to:
+        </p>
+        <ul>
+          <li>Complete your orders and provide support.</li>
+          <li>Comply with legal, accounting and tax requirements.</li>
+        </ul>
+        <p>
+          You may request account deletion or data correction by contacting us via email.
+        </p>
+      </section>
+
+      <section class="mb-4">
+        <h5>8. Your Rights</h5>
+        <p>You may have the right to:</p>
+        <ul>
+          <li>Access the personal data we hold about you.</li>
+          <li>Request correction of inaccurate or incomplete data.</li>
+          <li>Request deletion of your account, subject to legal limitations.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h5>9. Contact Us</h5>
+        <p>
+          If you have any questions or concerns about this Privacy Policy, please contact:
+        </p>
+        <p class="mb-1">
+          <strong>Email:</strong>
+          <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a>
+        </p>
+        <p class="mb-1">
+          <strong>WhatsApp:</strong> +91-9241970722
+        </p>
+        <p class="small mb-0">
+          GT Mall (Keshav Kumar – Founder &amp; CEO)<br />
+          House no-15, Kamathan (Ambaicharua)<br />
+          Khagaria, Bihar – 848203, India
+        </p>
+      </section>
     </div>
   </main>
 
-  <footer id="mainFooter" class="mt-auto"></footer>
+  <!-- FOOTER -->
+  <footer class="border-top py-3 mt-auto">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <div class="small text-muted">
+        &copy; <span id="yearSpan"></span> GT Mall. All rights reserved.
+      </div>
+      <div class="small">
+        <a href="about.html" class="text-decoration-none me-3">About</a>
+        <a href="contact.html" class="text-decoration-none me-3">Contact</a>
+        <a href="terms.html" class="text-decoration-none me-3">Terms</a>
+        <a href="privacy.html" class="text-decoration-none me-3">Privacy</a>
+        <a href="refund.html" class="text-decoration-none">Refund Policy</a>
+      </div>
+    </div>
+  </footer>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/navbar.js"></script>
+  <script>
+    // Footer year
+    document.getElementById("yearSpan").textContent = new Date().getFullYear();
+
+    // Cart badge from localStorage
+    try {
+      const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      const count = items.reduce((t, x) => t + (x.quantity || 1), 0);
+      const badge = document.getElementById("navCartCount");
+      if (badge) badge.textContent = count;
+    } catch (e) {}
+  </script>
 </body>
 </html>
