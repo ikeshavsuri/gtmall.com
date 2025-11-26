@@ -3,76 +3,194 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Terms &amp; Conditions | GT Mall</title>
+  <title>Terms & Conditions | GT Mall</title>
 
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Main CSS -->
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-  <header id="mainHeader"></header>
 
+  <!-- STATIC NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="assets/img/logo.png" alt="GT Mall" style="height: 32px;" class="me-2" />
+        <span class="fw-bold">GT Mall</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Shop</a></li>
+          <li class="nav-item"><a class="nav-link" href="my_orders.html">My Orders</a></li>
+          <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="cart.html">
+              Cart <span id="navCartCount" class="badge bg-success ms-1">0</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="btn btn-outline-success ms-lg-2" href="login_signup.html">Login / Signup</a>
+          </li>
+
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE CONTENT -->
   <main class="py-5">
     <div class="container">
       <h1 class="mb-3">Terms &amp; Conditions</h1>
-      <p class="text-muted">Last updated: 26 November 2025</p>
+      <p class="text-muted mb-4">Last updated: 26 November 2025</p>
 
-      <h5>1. Acceptance of terms</h5>
-      <p>
-        By accessing or using GT Mall, you agree to these Terms &amp; Conditions
-        and our Privacy Policy. If you do not agree, please do not use this website.
-      </p>
+      <!-- SECTION 1 -->
+      <section class="mb-4">
+        <h5>1. Acceptance of Terms</h5>
+        <p>
+          By using www.gtmall.run.place (“Website”), you agree to be bound by these Terms &amp;
+          Conditions and our Privacy Policy. If you do not agree, please do not use this website.
+        </p>
+      </section>
 
-      <h5>2. Use of website</h5>
-      <p>
-        You agree to use GT Mall only for lawful purposes and not to attempt any 
-        activity that may harm the website, other users or our services.
-      </p>
+      <!-- SECTION 2 -->
+      <section class="mb-4">
+        <h5>2. Use of Website</h5>
+        <p>
+          You agree to use the website only for lawful purposes. You must not:
+        </p>
+        <ul>
+          <li>Attempt to access restricted areas of the site without authorization.</li>
+          <li>Upload harmful scripts, viruses or spam.</li>
+          <li>Use false information while placing orders.</li>
+        </ul>
+      </section>
 
-      <h5>3. Product information</h5>
-      <p>
-        We try to keep all product images, descriptions and prices accurate, but
-        occasional errors may occur. In such cases, we reserve the right to cancel
-        the order and issue a refund.
-      </p>
+      <!-- SECTION 3 -->
+      <section class="mb-4">
+        <h5>3. Product Information</h5>
+        <p>
+          We make every effort to display the product details, images and prices accurately.
+          However, errors may occur due to technical issues. In such cases, GT Mall reserves 
+          the right to cancel the order and issue a refund.
+        </p>
+      </section>
 
-      <h5>4. Orders &amp; payments</h5>
-      <p>
-        Your order is confirmed only after successful payment and confirmation
-        email/SMS. We use third-party payment gateways for secure transaction 
-        processing.
-      </p>
+      <!-- SECTION 4 -->
+      <section class="mb-4">
+        <h5>4. Orders & Payments</h5>
+        <p>
+          Your order is considered confirmed only after successful payment and receipt of email/SMS confirmation.
+          GT Mall uses trusted payment gateways such as Razorpay or Cashfree for secure transactions.
+        </p>
+      </section>
 
-      <h5>5. Shipping &amp; delivery</h5>
-      <p>
-        Estimated delivery dates shown on the website are approximate and may 
-        vary due to courier delays or operational issues. We are not liable for 
-        delays beyond our control but will always try to help you track your order.
-      </p>
+      <!-- SECTION 5 -->
+      <section class="mb-4">
+        <h5>5. Shipping & Delivery</h5>
+        <p>
+          Delivery timelines shown on the website are estimates. Actual delivery may vary based on the courier,
+          location or operational delays. We always try our best to ensure timely delivery.
+        </p>
+      </section>
 
-      <h5>6. Returns &amp; refunds</h5>
-      <p>
-        Returns and refunds are handled as per our separate 
-        <a href="refund.html">Return &amp; Refund Policy</a>. Please review that 
-        page before placing an order.
-      </p>
+      <!-- SECTION 6 -->
+      <section class="mb-4">
+        <h5>6. Returns & Refunds</h5>
+        <p>
+          Our return and refund policies are explained in detail on the 
+          <a href="refund.html">Refund Policy</a> page. Please review them before placing an order.
+        </p>
+      </section>
 
-      <h5>7. Changes to terms</h5>
-      <p>
-        We may update these Terms &amp; Conditions from time to time. Updated 
-        versions will be posted on this page with a new “Last updated” date.
-      </p>
+      <!-- SECTION 7 -->
+      <section class="mb-4">
+        <h5>7. Account Responsibility</h5>
+        <p>
+          You are responsible for maintaining the confidentiality of your account and password.
+          GT Mall is not liable for unauthorized access resulting from negligence on your part.
+        </p>
+      </section>
 
-      <h5>8. Contact</h5>
-      <p>
-        For any questions regarding these terms, please contact 
-        <a href="mailto:support@gtmall.run.place">support@gtmall.run.place</a>.
-      </p>
+      <!-- SECTION 8 -->
+      <section class="mb-4">
+        <h5>8. Limitation of Liability</h5>
+        <p>
+          GT Mall is not responsible for any indirect, incidental or consequential damages arising out of:
+        </p>
+        <ul>
+          <li>Use of the website</li>
+          <li>Delayed delivery</li>
+          <li>Product defects (manufacturer responsibility)</li>
+          <li>Payment gateway downtime</li>
+        </ul>
+      </section>
+
+      <!-- SECTION 9 -->
+      <section class="mb-4">
+        <h5>9. Policy Changes</h5>
+        <p>
+          GT Mall reserves the right to update or modify these Terms &amp; Conditions at any time.
+          Changes will be posted on this page with an updated date.
+        </p>
+      </section>
+
+      <!-- SECTION 10 -->
+      <section>
+        <h5>10. Contact Us</h5>
+        <p>
+          For any concerns regarding these Terms, please contact:
+        </p>
+        <p class="mb-1"><strong>Email:</strong> <a href="mailto:ikeshavsuri@gmail.com">ikeshavsuri@gmail.com</a></p>
+        <p class="mb-1"><strong>WhatsApp:</strong> +91-9241970722</p>
+        <p class="small mb-0">
+          GT Mall (Keshav Kumar – Founder &amp; CEO)<br />
+          House no-15, Kamathan (Ambaicharua)<br />
+          Khagaria, Bihar – 848203, India
+        </p>
+      </section>
     </div>
   </main>
 
-  <footer id="mainFooter" class="mt-auto"></footer>
+  <!-- FOOTER -->
+  <footer class="border-top py-3 mt-auto">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <div class="small text-muted">
+        &copy; <span id="yearSpan"></span> GT Mall. All rights reserved.
+      </div>
+      <div class="small">
+        <a href="about.html" class="text-decoration-none me-3">About</a>
+        <a href="contact.html" class="text-decoration-none me-3">Contact</a>
+        <a href="terms.html" class="text-decoration-none me-3">Terms</a>
+        <a href="privacy.html" class="text-decoration-none me-3">Privacy</a>
+        <a href="refund.html" class="text-decoration-none">Refund Policy</a>
+      </div>
+    </div>
+  </footer>
 
+  <!-- JS Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/navbar.js"></script>
+  <script>
+    // Footer Year
+    document.getElementById("yearSpan").textContent = new Date().getFullYear();
+
+    // Cart Badge Count
+    try {
+      const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      const count = items.reduce((t, x) => t + (x.quantity || 1), 0);
+      const badge = document.getElementById("navCartCount");
+      if (badge) badge.textContent = count;
+    } catch (e) {}
+  </script>
+
 </body>
 </html>
