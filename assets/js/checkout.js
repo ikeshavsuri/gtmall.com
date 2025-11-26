@@ -1,5 +1,5 @@
 const API_BASE = "https://gtmall-com.onrender.com";
-const RAZORPAY_KEY_ID = "rzp_test_RjWvj3SadohBEe"; // TODO: put your test key
+const RAZORPAY_KEY_ID = "rzp_test_RkJMsw0n1lY0eg"; // TODO: put your test key
 
 function authHeaders() {
   return {
