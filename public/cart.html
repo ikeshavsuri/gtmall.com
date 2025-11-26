@@ -86,18 +86,79 @@
           </div>
           <div class="card-body">
             <div class="d-flex justify-content-between mb-2">
-              <span>Cart Total</span>
-              <span id="cartTotal">₹0</span>
+              <p>Cart Total: ₹<span id="cart-total-amount">0</span></p>
             </div>
             <hr>
-            <button id="checkoutBtn" class="btn btn-success w-100" onclick="window.location.href='checkout.html'">
-              Proceed to Checkout
-            </button>
+            <button id="rzp-button1">Proceed to Checkout</button>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <!-- Razorpay checkout script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+  // ⚠️ yaha apna TEST key_id daalo (Razorpay Dashboard -> API Keys)
+  const RAZORPAY_KEY_ID = "rzp_test_RjwJyS3ad0hBEe"; // replace this
+
+  function getCartAmountInPaise() {
+    const el = document.getElementById("cart-total-amount");
+    if (!el) return 0;
+
+    // span ke andar sirf number hona chahiye (e.g. 499)
+    const rupeesText = el.innerText || el.textContent || "0";
+    const rupees = parseFloat(rupeesText) || 0;
+    return Math.round(rupees * 100); // rupees -> paise
+  }
+
+  document.getElementById("rzp-button1").addEventListener("click", function (e) {
+    e.preventDefault();
+
+    const amountPaise = getCartAmountInPaise();
+
+    if (amountPaise <= 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+
+    const options = {
+      key: RAZORPAY_KEY_ID,
+      amount: amountPaise.toString(), // in paise
+      currency: "INR",
+      name: "GT Mall",
+      description: "Order payment at GT Mall",
+
+      handler: function (response) {
+        // Payment successful callback
+        alert(
+          "Payment successful!\\nPayment ID: " +
+            response.razorpay_payment_id
+        );
+
+        // TODO: yaha cart clear karo + success page par redirect karo
+        // example:
+        // localStorage.removeItem("gtmall_cart");
+        window.location.href = "my_orders.html";
+      },
+
+      prefill: {
+        // agar tumhare paas login system hai, yahan real user details bhar sakte ho
+        name: "Customer Name",
+        email: "customer@example.com",
+        contact: "9999999999",
+      },
+
+      theme: {
+        color: "#3399cc",
+      },
+    };
+
+    const rzp1 = new Razorpay(options);
+    rzp1.open();
+  });
+</script>
+
 
   <footer class="footer">
     <div class="footer-bottom text-center mt-3">
