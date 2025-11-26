@@ -24,15 +24,27 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem("userUid");
     window.location.href = "index.html";
   });
+// search form logic
+const searchForm = document.getElementById("nav-search-form");
+const searchInput = document.getElementById("nav-search-input");
 
-  const searchForm = document.getElementById("nav-search-form");
-  const searchInput = document.getElementById("nav-search-input");
-  searchForm?.addEventListener("submit", (e) => {
+if (searchForm && searchInput) {
+  searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const q = searchInput.value.trim();
-    if (!q) return;
-    window.location.href = "shop.html"; // you can add ?search=
+
+    // kuch nahi likha => normal shop page
+    if (!q) {
+      window.location.href = "shop.html";
+      return;
+    }
+
+    // text hai => advanced search mode
+    window.location.href = "shop.html?search=" + encodeURIComponent(q);
   });
+}
+
+  
 
   updateCartBadge();
 });
