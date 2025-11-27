@@ -10,64 +10,7 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <!-- navbar same -->
-  <nav class="navbar navbar-expand-lg">
-    <div class="container">
-      <a class="navbar-brand" href="index.html">
-        <img src="assets/img/logo.png" alt="GT Mall Logo" /> GT Mall
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span><i class="fas fa-bars"></i></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <form class="d-flex mx-auto my-3 my-lg-0" id="nav-search-form" style="max-width:450px; width:100%;">
-          <input class="form-control me-2" type="search" id="nav-search-input" placeholder="Search for products" aria-label="Search">
-          <button class="btn btn-outline-success" type="submit">
-            <i class="fas fa-search"></i>
-          </button>
-        </form>
-
-        <ul class="navbar-nav ms-auto align-items-center">
-          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="shop.html">Shop</a></li>
-          <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
-          <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
-
-          <li class="nav-item ms-2">
-            <a href="cart.html" class="nav-link position-relative">
-              <i class="fa-solid fa-bag-shopping"></i>
-              <span id="cart-count-badge"
-                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                    style="display:none;">
-                0
-              </span>
-            </a>
-          </li>
-
-          <li class="nav-item dropdown ms-2 d-none" id="myAccountDropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              <i class="fa-regular fa-user"></i>
-              <span id="navUserGreeting" class="ms-1">My Account</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li class="dropdown-header" id="navUserEmail"></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="my_orders.html"><i class="fa-solid fa-box me-2"></i>My Orders</a></li>
-              <li><a class="dropdown-item" href="#"><i class="fa-regular fa-heart me-2"></i>My Wishlist</a></li>
-              <li><a class="dropdown-item" href="my_address.html"><i class="fa-solid fa-location-dot me-2"></i>My Addresses</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item text-danger" id="navLogoutBtn"><i class="fa-solid fa-right-from-bracket me-2"></i>Logout</button></li>
-            </ul>
-          </li>
-
-          <li class="nav-item ms-2" id="loginNavItem">
-            <a href="login.html" class="login-btn">Login / Sign Up</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <div id="navbar-container"></div>
 
   <div class="container my-4">
     <h2 class="mb-4">My Orders</h2>
@@ -134,5 +77,6 @@
       }
     });
   </script>
+  <script src="assets/js/load-navbar.js"></script>
 </body>
 </html>
