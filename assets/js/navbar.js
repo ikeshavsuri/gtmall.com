@@ -1,50 +1,77 @@
-document.addEventListener("DOMContentLoaded", () => {
+// assets/js/navbar.js
+
+function initNavbar() {
+  // Login info (login.js se set hoti hai)
   const userName = localStorage.getItem("userName");
   const userEmail = localStorage.getItem("userEmail");
 
   const myAccountDropdown = document.getElementById("myAccountDropdown");
-  const loginNavItem = document.getElementById("loginNavItem");
-  const navUserGreeting = document.getElementById("navUserGreeting");
-  const navUserEmail = document.getElementById("navUserEmail");
-  const navLogoutBtn = document.getElementById("navLogoutBtn");
+  const loginNavItem      = document.getElementById("loginNavItem");
+  const navUserGreeting   = document.getElementById("navUserGreeting");
+  const navUserEmail      = document.getElementById("navUserEmail");
+  const navLogoutBtn      = document.getElementById("navLogoutBtn");
 
+  // ---------- LOGIN / LOGOUT UI ----------
   if (userName) {
-    loginNavItem?.classList.add("d-none");
-    myAccountDropdown?.classList.remove("d-none");
-    if (navUserGreeting) navUserGreeting.textContent = "Hi, " + userName.split(" ")[0];
-    if (navUserEmail && userEmail) navUserEmail.textContent = userEmail;
+    // Logged in state
+    if (loginNavItem)      loginNavItem.classList.add("d-none");
+    if (myAccountDropdown) myAccountDropdown.classList.remove("d-none");
+
+    if (navUserGreeting) {
+      navUserGreeting.textContent = "Hi, " + userName.split(" ")[0];
+    }
+    if (navUserEmail && userEmail) {
+      navUserEmail.textContent = userEmail;
+    }
   } else {
-    loginNavItem?.classList.remove("d-none");
-    myAccountDropdown?.classList.add("d-none");
+    // Logged out state
+    if (loginNavItem)      loginNavItem.classList.remove("d-none");
+    if (myAccountDropdown) myAccountDropdown.classList.add("d-none");
   }
 
-  navLogoutBtn?.addEventListener("click", () => {
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userUid");
-    window.location.href = "index.html";
-  });
-// search form logic
-const searchForm = document.getElementById("nav-search-form");
-const searchInput = document.getElementById("nav-search-input");
+  // ---------- LOGOUT BUTTON ----------
+  if (navLogoutBtn) {
+    navLogoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
 
-if (searchForm && searchInput) {
-  searchForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const q = searchInput.value.trim();
+      // Jo bhi auth info hai, clear karo
+      localStorage.removeItem("userUid");
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
 
-    // kuch nahi likha => normal shop page
-    if (!q) {
-      window.location.href = "shop.html";
-      return;
-    }
+      // Redirect back to home (ya chaaho to login.html)
+      window.location.href = "index.html";
+    });
+  }
 
-    // text hai => advanced search mode
-    window.location.href = "shop.html?search=" + encodeURIComponent(q);
-  });
+  // ---------- SEARCH BAR ----------
+  const searchForm  = document.getElementById("nav-search-form");
+  const searchInput = document.getElementById("nav-search-input");
+
+  if (searchForm && searchInput) {
+    searchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = searchInput.value.trim();
+      if (!q) {
+        // agar empty search hai to direct shop page
+        window.location.href = "shop.html";
+        return;
+      }
+      window.location.href = "shop.html?search=" + encodeURIComponent(q);
+    });
+  }
+
+  // ---------- CART BADGE ----------
+  // Agar cart.js loaded hai aur updateCartBadge function defined hai
+  if (typeof updateCartBadge === "function") {
+    updateCartBadge();
+  }
 }
 
-  
-
-  updateCartBadge();
-});
+// Agar DOM abhi load ho raha hai to event pe chalao,
+// warna turant chalao (dynamic navbar ke case me)
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initNavbar);
+} else {
+  initNavbar();
+}
