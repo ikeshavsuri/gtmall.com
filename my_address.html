@@ -5,18 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Addresses | GT Mall</title>
 
+  <!-- Bootstrap + main CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 </head>
 <body>
 
-  <!-- SIMPLE STATIC NAVBAR (same style as other pages) -->
-  <div id="navbar-container"></div>
+  <!-- NAVBAR (same as index.html) -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <img src="assets/img/logo.png" alt="GT Mall Logo" /> GT Mall
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span><i class="fas fa-bars"></i></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <form class="d-flex mx-auto my-3 my-lg-0" id="nav-search-form" style="max-width:450px; width:100%;">
+          <input class="form-control me-2" type="search" id="nav-search-input" placeholder="Search for products" aria-label="Search">
+          <button class="btn btn-outline-success" type="submit">
+            <i class="fas fa-search"></i>
+          </button>
+        </form>
+
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Shop</a></li>
+          <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+
+          <li class="nav-item ms-2">
+            <a href="cart.html" class="nav-link position-relative">
+              <i class="fa-solid fa-bag-shopping"></i>
+              <span id="cart-count-badge"
+                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                    style="display:none;">
+                0
+              </span>
+            </a>
+          </li>
+
+          <!-- Logged-in dropdown -->
+          <li class="nav-item dropdown ms-2 d-none" id="myAccountDropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="fa-regular fa-user"></i>
+              <span id="navUserGreeting" class="ms-1">My Account</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li class="dropdown-header" id="navUserEmail"></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="my_orders.html"><i class="fa-solid fa-box me-2"></i>My Orders</a></li>
+              <li><a class="dropdown-item" href="#"><i class="fa-regular fa-heart me-2"></i>My Wishlist</a></li>
+              <li><a class="dropdown-item" href="my_address.html"><i class="fa-solid fa-location-dot me-2"></i>My Addresses</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button class="dropdown-item text-danger" id="navLogoutBtn">
+                  <i class="fa-solid fa-right-from-bracket me-2"></i>Logout
+                </button>
+              </li>
+            </ul>
+          </li>
+
+          <!-- Logged-out state -->
+          <li class="nav-item ms-2" id="loginNavItem">
+            <a href="login.html" class="login-btn">Login / Sign Up</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
   <!-- PAGE CONTENT -->
   <main class="py-4">
     <div class="container">
-      <h1 class="mb-3">My Addresses</h1>
+      <h2 class="mb-3">My Addresses</h2>
       <p class="text-muted mb-4">
         Manage your saved delivery addresses here.
       </p>
@@ -31,7 +95,7 @@
         </button>
       </div>
 
-      <!-- Address form (for add new / first time) -->
+      <!-- Address form -->
       <div id="addressFormSection" class="card shadow-sm border-0" style="display:none;">
         <div class="card-body">
           <h5 id="addressFormTitle" class="card-title mb-3">Add a new address</h5>
@@ -54,21 +118,18 @@
                 <label class="form-label">Email</label>
                 <input type="email" id="addrEmail" class="form-control" required />
               </div>
-
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label">Pincode</label>
                 <input type="text" id="addrPincode" class="form-control" maxlength="6" required />
               </div>
-              <div class="col-md-8">
+              <div class="col-md-6">
                 <label class="form-label">Locality</label>
                 <input type="text" id="addrLocality" class="form-control" required />
               </div>
-
               <div class="col-12">
-                <label class="form-label">Area &amp; Street</label>
+                <label class="form-label">Address (Area and Street)</label>
                 <input type="text" id="addrAreaStreet" class="form-control" required />
               </div>
-
               <div class="col-md-6">
                 <label class="form-label">City / District</label>
                 <input type="text" id="addrCity" class="form-control" required />
@@ -77,12 +138,10 @@
                 <label class="form-label">State</label>
                 <input type="text" id="addrState" class="form-control" required />
               </div>
-
               <div class="col-12">
                 <label class="form-label">Landmark (optional)</label>
                 <input type="text" id="addrLandmark" class="form-control" />
               </div>
-
               <div class="col-12">
                 <label class="form-label d-block">Address Type</label>
                 <div class="form-check form-check-inline">
@@ -94,7 +153,6 @@
                   <label class="form-check-label" for="addrTypeWork">Work</label>
                 </div>
               </div>
-
               <div class="col-12">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="addrIsDefault" checked />
@@ -103,25 +161,20 @@
                   </label>
                 </div>
               </div>
+            </div>
 
-              <div class="col-12">
-                <button type="submit" class="btn btn-success">
-                  Save Address
-                </button>
-                <button type="button" id="btnCancelForm" class="btn btn-outline-secondary ms-2">
-                  Cancel
-                </button>
-              </div>
+            <div class="mt-3 d-flex justify-content-end gap-2">
+              <button type="button" id="btnCancelForm" class="btn btn-outline-secondary">Cancel</button>
+              <button type="submit" class="btn btn-success">Save Address</button>
             </div>
           </form>
-
         </div>
       </div>
     </div>
   </main>
 
-  <!-- FOOTER (simple) -->
-  <footer class="border-top py-3 mt-auto">
+  <!-- SIMPLE FOOTER -->
+  <footer class="border-top py-3 mt-4">
     <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
       <div class="small text-muted">
         &copy; <span id="yearSpan"></span> GT Mall. All rights reserved.
@@ -129,7 +182,7 @@
       <div class="small">
         <a href="about.html" class="text-decoration-none me-3">About</a>
         <a href="contact.html" class="text-decoration-none me-3">Contact</a>
-        <a href="faq.html" class="text-decoration-none me-3">FAQ</a>
+        <a href="faq.html" class="text-decoration-none me-3">FAQ</a> |
         <a href="terms.html" class="text-decoration-none me-3">Terms</a>
         <a href="privacy.html" class="text-decoration-none me-3">Privacy</a>
         <a href="refund.html" class="text-decoration-none">Refund Policy</a>
@@ -139,6 +192,8 @@
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/cart.js"></script>
+  <script src="assets/js/navbar.js"></script>
 
   <script>
     const API_BASE = "https://gtmall-com.onrender.com";
@@ -152,22 +207,13 @@
       };
     }
 
-    // footer year + cart
-    document.getElementById("yearSpan").textContent = new Date().getFullYear();
-    try {
-      const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
-      const count = items.reduce((t, x) => t + (x.quantity || 1), 0);
-      const badge = document.getElementById("navCartCount");
-      if (badge) badge.textContent = count;
-    } catch (e) {}
-
     async function loadAddresses() {
       const savedSection = document.getElementById("savedAddressesSection");
-      const listDiv = document.getElementById("addressesList");
-      const formSection = document.getElementById("addressFormSection");
+      const listDiv      = document.getElementById("addressesList");
+      const formSection  = document.getElementById("addressFormSection");
 
       savedSection.style.display = "none";
-      formSection.style.display = "none";
+      formSection.style.display  = "none";
       listDiv.innerHTML = "";
 
       try {
@@ -176,8 +222,8 @@
         });
 
         if (res.status === 401) {
-          listDiv.innerHTML = '<div class="col-12"><p class="text-muted">Please login to manage addresses.</p></div>';
-          formSection.style.display = "none";
+          listDiv.innerHTML =
+            '<div class="col-12"><p class="text-muted">Please login to manage addresses.</p></div>';
           savedSection.style.display = "block";
           return;
         }
@@ -190,7 +236,6 @@
           return;
         }
 
-        // addresses list dikhao
         addresses.forEach((a) => {
           const full = `
             ${a.name}<br>
@@ -215,18 +260,21 @@
         savedSection.style.display = "block";
       } catch (err) {
         console.error(err);
-        listDiv.innerHTML = '<div class="col-12"><p class="text-danger">Failed to load addresses. Please try again.</p></div>';
+        listDiv.innerHTML =
+          '<div class="col-12"><p class="text-danger">Failed to load addresses. Please try again.</p></div>';
         savedSection.style.display = "block";
       }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      const formSection = document.getElementById("addressFormSection");
-      const form = document.getElementById("addressForm");
-      const btnShowForm = document.getElementById("btnShowAddressForm");
-      const btnCancelForm = document.getElementById("btnCancelForm");
+      document.getElementById("yearSpan").textContent = new Date().getFullYear();
 
       loadAddresses();
+
+      const formSection  = document.getElementById("addressFormSection");
+      const form         = document.getElementById("addressForm");
+      const btnShowForm  = document.getElementById("btnShowAddressForm");
+      const btnCancelForm= document.getElementById("btnCancelForm");
 
       btnShowForm?.addEventListener("click", () => {
         form.reset();
@@ -281,10 +329,14 @@
             body: JSON.stringify({ address, isDefault })
           });
 
-          const data = await res.json();
-          if (!res.ok || !data.success) {
-            console.error("Address save error:", data);
-            alert(data.message || "Failed to save address.");
+          if (res.status === 401) {
+            alert("Please login again to save address.");
+            window.location.href = "login.html";
+            return;
+          }
+
+          if (!res.ok) {
+            alert("Server error while saving address. Please try again.");
             return;
           }
 
@@ -298,7 +350,5 @@
       });
     });
   </script>
-  <script src="assets/js/load-navbar.js"></script>
-
 </body>
-</html>
+                </html>
