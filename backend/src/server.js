@@ -2,6 +2,9 @@
 
 import dotenv from "dotenv";
 dotenv.config();
+import Product from "./models/Product.js";
+import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
+
 
 import express from "express";
 import cors from "cors";
@@ -187,6 +190,127 @@ app.post("/api/cart/mine", userFromHeaders, async (req, res) => {
     return res.status(500).json({ message: "Failed to save cart" });
   }
 });
+// ---------- SELLER / ADMIN PRODUCT ROUTES ----------
+
+// List all products (for admin/seller)
+app.get("/api/admin/products", userFromHeaders, requireAdmin, async (req, res) => {
+  try {
+    const products = await Product.find({}).sort({ createdAt: -1 });
+    return res.json(products);
+  } catch (err) {
+    console.error("GET /api/admin/products error:", err);
+    return res.status(500).json({ message: "Failed to load products" });
+  }
+});
+
+// Create single product
+app.post("/api/admin/products", userFromHeaders, requireAdmin, async (req, res) => {
+  try {
+    const body = req.body || {};
+
+    // Map from generic payload to your Product schema
+    const data = {
+      name: body.name || body.title,
+      title: body.title || body.name,
+      description: body.description || "",
+      price: Number(body.price) || 0,
+      mrp: Number(body.mrp || body.price || 0),
+      category: body.category || "",
+      image: body.image || "",
+      images: body.images && body.images.length ? body.images : (body.image ? [body.image] : []),
+      stock: body.stock ?? 0,
+      isActive: body.isActive !== false,
+    };
+
+    const product = await Product.create(data);
+    return res.status(201).json(product);
+  } catch (err) {
+    console.error("POST /api/admin/products error:", err);
+    return res.status(500).json({ message: "Failed to create product" });
+  }
+});
+
+// Update product
+app.put("/api/admin/products/:id", userFromHeaders, requireAdmin, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const update = {
+      name: body.name || body.title,
+      title: body.title || body.name,
+      description: body.description,
+      price: body.price,
+      mrp: body.mrp,
+      category: body.category,
+      image: body.image,
+      images: body.images,
+      stock: body.stock,
+      isActive: body.isActive,
+    };
+    const product = await Product.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    return res.json(product);
+  } catch (err) {
+    console.error("PUT /api/admin/products/:id error:", err);
+    return res.status(500).json({ message: "Failed to update product" });
+  }
+});
+
+// Delete product
+app.delete("/api/admin/products/:id", userFromHeaders, requireAdmin, async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    return res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error("DELETE /api/admin/products/:id error:", err);
+    return res.status(500).json({ message: "Failed to delete product" });
+  }
+});
+
+// Bulk upload from CSV
+app.post("/api/admin/products/bulk", userFromHeaders, requireAdmin, async (req, res) => {
+  try {
+    const rows = req.body?.rows || [];
+    if (!rows.length) {
+      return res.status(400).json({ message: "No rows provided" });
+    }
+
+    const docs = rows.map((row) => {
+      const price = Number(row.price || 0);
+      const mrp = Number(row.mrp || price || 0);
+      const stock = Number(row.stock || 0);
+
+      const image = row.image || "";
+      const images = image ? [image] : [];
+
+      return {
+        name: row.name || row.title,
+        title: row.title || row.name,
+        description: row.description || "",
+        price,
+        mrp,
+        category: row.category || "",
+        image,
+        images,
+        stock,
+        isActive: true,
+      };
+    });
+
+    await Product.insertMany(docs);
+    return res.json({ inserted: docs.length });
+  } catch (err) {
+    console.error("POST /api/admin/products/bulk error:", err);
+    return res.status(500).json({ message: "Bulk upload failed" });
+  }
+});
+
 
 // -------------------- ORDERS & PAYMENT --------------------
 
