@@ -12,7 +12,7 @@ import mongoose from "mongoose";
 import { connectDB } from "./config/db.js";
 import Address from "./models/Address.js";
 import Order from "./models/Order.js";
-import { userFromHeaders } from "./middleware_auth.js";
+import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
 
 // -------------------- BASIC APP SETUP --------------------
 
@@ -190,6 +190,20 @@ app.post("/api/cart/mine", userFromHeaders, async (req, res) => {
 
 // -------------------- ORDERS & PAYMENT --------------------
 
+// GET /api/admin/orders  -> all orders for admin dashboard
+app.get("/api/admin/orders", userFromHeaders, requireAdmin, async (req, res) => {
+  try {
+    // Admin can see all orders, newest first
+    const orders = await Order.find({}).sort({ createdAt: -1 });
+    return res.json(orders);
+  } catch (err) {
+    console.error("GET /api/admin/orders error:", err);
+    return res.status(500).json({ message: "Failed to load admin orders" });
+  }
+});
+
+
+
 // GET /api/orders/mine  -> current user orders
 app.get("/api/orders/mine", userFromHeaders, async (req, res) => {
   try {
@@ -280,6 +294,7 @@ app.post("/api/verify-payment", userFromHeaders, async (req, res) => {
 
     const orderDoc = await Order.create({
       userId: user.id,
+      userEmail: user.email,
       items: items.map((i) => ({
         productId: i.id?.toString() || "",
         name: i.name,
