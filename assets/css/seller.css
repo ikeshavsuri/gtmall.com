@@ -1,0 +1,177 @@
+/* -----------------------------
+   SELLER PANEL GLOBAL STYLES
+--------------------------------*/
+
+/* Container */
+.seller-container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* Headings */
+.seller-container h1,
+.seller-container h2 {
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+/* Status message */
+#sellerStatus,
+#csvStatus {
+  padding: 10px 12px;
+  background: #f8f8f8;
+  border-left: 4px solid #007bff;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+/* -----------------------------
+   FORMS
+--------------------------------*/
+#productFormSection,
+.bulk-upload-section {
+  border: 1px solid #e5e5e5;
+  padding: 20px;
+  border-radius: 10px;
+  background: #fff;
+  margin-bottom: 30px;
+}
+
+#productForm .form-group {
+  margin-bottom: 15px;
+}
+
+#productForm label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+#productForm input,
+#productForm textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+#productForm button {
+  margin-top: 10px;
+  padding: 10px 18px;
+  font-size: 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+}
+
+/* Clear button */
+#resetFormBtn {
+  background: #777;
+  color: #fff;
+  margin-left: 10px;
+}
+
+/* Save button */
+#productForm button[type="submit"] {
+  background: #007bff;
+  color: white;
+}
+
+/* -----------------------------
+   BULK UPLOAD
+--------------------------------*/
+.bulk-upload-section input[type="file"] {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.bulk-upload-section button {
+  padding: 10px 18px;
+  font-size: 15px;
+  border-radius: 6px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+/* -----------------------------
+   PRODUCT TABLE
+--------------------------------*/
+.seller-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.seller-table th,
+.seller-table td {
+  border: 1px solid #e5e5e5;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.seller-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.seller-table img {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}
+
+/* Action buttons */
+.btn-sm {
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  border: none;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: #fff;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: #fff;
+  margin-left: 6px;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: #fff;
+}
+
+/* Hover Effects */
+.btn-sm:hover {
+  opacity: 0.85;
+}
+
+.seller-table tr:hover {
+  background: #fafafa;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .seller-table th,
+  .seller-table td {
+    font-size: 12px;
+    padding: 6px;
+  }
+
+  #productFormSection,
+  .bulk-upload-section {
+    padding: 15px;
+  }
+}
