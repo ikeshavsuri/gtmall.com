@@ -1,8 +1,4 @@
-// backend/src/server.js
 
-import dotenv from "dotenv";
-dotenv.config();
-import Product from "./assets/js/Product.js";
 
 
 
