@@ -3,7 +3,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import Product from "./models/Product.js";
-import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
+
 
 
 import express from "express";
