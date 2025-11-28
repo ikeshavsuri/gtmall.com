@@ -131,5 +131,3 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCartPage();
   updateCartBadge();
 });
-saveCart(cart);
-syncCartToServer();
