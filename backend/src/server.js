@@ -1,73 +1,179 @@
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
 import Razorpay from "razorpay";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 // ---------------------------
-//  DATABASE & MODELS
+//  DB CONFIG
 // ---------------------------
 import { connectDB } from "./config/db.js";
-import User from "./models/User.js";
+
+// agar tumhare User.js me default export nahi hai to yeh sahi hai:
+import { User } from "./models/User.js";
+// Address, Order, Product ko maine default export assume kiya hai
 import Address from "./models/Address.js";
 import Order from "./models/Order.js";
-
-// ⚠ IMPORTANT: file name EXACTLY Product.js
 import Product from "./models/Product.js";
 
-// ---------------------------
-//  AUTH MIDDLEWARE
-// ---------------------------
 import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
 
+// DB connect
 connectDB();
 
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
 // ---------------------------
-//  BASE HEALTH CHECK
+//  RAZORPAY SETUP
 // ---------------------------
-app.get("/", (req, res) => {
-  res.json({ message: "Backend running ✔" });
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// (optional) frontend agar Razorpay order create route use kare:
+app.post("/api/razorpay/create-order", userFromHeaders, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount) {
+      return res.status(400).json({ message: "Amount is required" });
+    }
+
+    const options = {
+      amount: Math.round(Number(amount) * 100), // in paise
+      currency: "INR",
+      receipt: `rcpt_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+    return res.json(order);
+  } catch (err) {
+    console.error("Razorpay create order error:", err);
+    return res.status(500).json({ message: "Failed to create payment order" });
+  }
 });
 
 // ---------------------------
-//  ADDRESS APIs (already working)
+//  SIMPLE HEALTH CHECK
+// ---------------------------
+app.get("/", (req, res) => {
+  res.json({ ok: true, message: "GT Mall backend running ✅" });
+});
+
+// ---------------------------
+//  CART MODEL (cross-device sync)
+// ---------------------------
+const cartItemSchema = new mongoose.Schema({
+  productId: String,
+  name: String,
+  price: Number,
+  quantity: Number,
+  image: String,
+});
+
+const cartSchema = new mongoose.Schema(
+  {
+    userId: { type: String, required: true },
+    userEmail: { type: String, required: true },
+    items: [cartItemSchema],
+  },
+  { timestamps: true }
+);
+
+const Cart = mongoose.model("Cart", cartSchema);
+
+// save / replace cart
+app.post("/api/cart", userFromHeaders, async (req, res) => {
+  try {
+    const { items } = req.body || {};
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ message: "items array required" });
+    }
+
+    const doc = await Cart.findOneAndUpdate(
+      { userId: req.user.id },
+      { userId: req.user.id, userEmail: req.user.email, items },
+      { upsert: true, new: true }
+    );
+
+    return res.json(doc);
+  } catch (err) {
+    console.error("POST /api/cart error:", err);
+    return res.status(500).json({ message: "Failed to save cart" });
+  }
+});
+
+// get cart
+app.get("/api/cart", userFromHeaders, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user.id });
+    return res.json(cart || { userId: req.user.id, items: [] });
+  } catch (err) {
+    console.error("GET /api/cart error:", err);
+    return res.status(500).json({ message: "Failed to load cart" });
+  }
+});
+
+// ---------------------------
+//  ADDRESS APIs
 // ---------------------------
 app.post("/api/address", userFromHeaders, async (req, res) => {
   try {
-    const user = req.user;
-
     const address = await Address.create({
-      userId: user.id,
+      userId: req.user.id,
       ...req.body,
     });
-
-    res.json(address);
+    return res.json(address);
   } catch (err) {
-    console.log("Address error:", err);
-    res.status(500).json({ message: "Failed to add address" });
+    console.error("POST /api/address error:", err);
+    return res.status(500).json({ message: "Failed to add address" });
   }
 });
 
 app.get("/api/address", userFromHeaders, async (req, res) => {
-  const addresses = await Address.find({ userId: req.user.id });
-  res.json(addresses);
+  try {
+    const addresses = await Address.find({ userId: req.user.id }).sort({
+      createdAt: -1,
+    });
+    return res.json(addresses);
+  } catch (err) {
+    console.error("GET /api/address error:", err);
+    return res.status(500).json({ message: "Failed to load addresses" });
+  }
 });
 
 // ---------------------------
-//   PLACE ORDER API
+//  ORDERS (user side)
 // ---------------------------
 app.post("/api/orders", userFromHeaders, async (req, res) => {
   try {
-    const { items, amount, address, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+    const {
+      items,
+      amount,
+      address,
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+    } = req.body || {};
+
+    if (!Array.isArray(items) || !items.length) {
+      return res.status(400).json({ message: "No items in order" });
+    }
 
     const orderDoc = await Order.create({
       userId: req.user.id,
       userEmail: req.user.email,
-      items,
+      items: items.map((i) => ({
+        productId: i.id?.toString?.() || i.productId || "",
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity || 1,
+        image: i.img || i.image || "",
+      })),
       amount,
       paymentStatus: "paid",
       paymentId: razorpay_payment_id,
@@ -77,130 +183,229 @@ app.post("/api/orders", userFromHeaders, async (req, res) => {
       status: "Processing",
     });
 
-    res.json(orderDoc);
+    return res.json(orderDoc);
   } catch (err) {
-    console.log("Order error:", err);
-    res.status(500).json({ message: "Failed to place order" });
+    console.error("POST /api/orders error:", err);
+    return res.status(500).json({ message: "Failed to place order" });
   }
 });
 
-// ---------------------------
-//   ADMIN: GET ALL ORDERS
-// ---------------------------
-app.get("/api/admin/orders", userFromHeaders, requireAdmin, async (req, res) => {
+// user ke khud ke orders
+app.get("/api/my-orders", userFromHeaders, async (req, res) => {
   try {
-    const orders = await Order.find({}).sort({ createdAt: -1 });
-    res.json(orders);
-  } catch (err) {
-    console.log("Admin orders error:", err);
-    res.status(500).json({ message: "Failed to load orders" });
-  }
-});
-
-// =====================================
-//   SELLER PANEL – PRODUCT MANAGEMENT
-// =====================================
-
-// Get all products
-app.get("/api/admin/products", userFromHeaders, requireAdmin, async (req, res) => {
-  try {
-    const products = await Product.find({}).sort({ createdAt: -1 });
-    res.json(products);
-  } catch (err) {
-    console.log("Get products error:", err);
-    res.status(500).json({ message: "Failed to load products" });
-  }
-});
-
-// Create new product
-app.post("/api/admin/products", userFromHeaders, requireAdmin, async (req, res) => {
-  try {
-    const body = req.body;
-
-    const product = await Product.create({
-      name: body.name || body.title,
-      title: body.title || body.name,
-      description: body.description || "",
-      price: Number(body.price) || 0,
-      mrp: Number(body.mrp || body.price || 0),
-      category: body.category || "",
-      image: body.image || "",
-      images: body.images?.length ? body.images : body.image ? [body.image] : [],
-      stock: Number(body.stock || 0),
-      isActive: true,
+    const orders = await Order.find({ userId: req.user.id }).sort({
+      createdAt: -1,
     });
-
-    res.status(201).json(product);
+    return res.json(orders);
   } catch (err) {
-    console.log("Create product error:", err);
-    res.status(500).json({ message: "Failed to create product" });
-  }
-});
-
-// Update product
-app.put("/api/admin/products/:id", userFromHeaders, requireAdmin, async (req, res) => {
-  try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-
-    if (!updated) return res.status(404).json({ message: "Product not found" });
-
-    res.json(updated);
-  } catch (err) {
-    console.log("Update product error:", err);
-    res.status(500).json({ message: "Failed to update product" });
-  }
-});
-
-// Delete product
-app.delete("/api/admin/products/:id", userFromHeaders, requireAdmin, async (req, res) => {
-  try {
-    const deleted = await Product.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Product not found" });
-
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    console.log("Delete product error:", err);
-    res.status(500).json({ message: "Failed to delete product" });
-  }
-});
-
-// Bulk CSV upload
-app.post("/api/admin/products/bulk", userFromHeaders, requireAdmin, async (req, res) => {
-  try {
-    const rows = req.body.rows || [];
-    if (!rows.length) return res.status(400).json({ message: "No rows found" });
-
-    const docs = rows.map((r) => ({
-      name: r.name,
-      title: r.name,
-      description: r.description || "",
-      price: Number(r.price || 0),
-      mrp: Number(r.mrp || r.price || 0),
-      category: r.category || "",
-      image: r.image,
-      images: r.image ? [r.image] : [],
-      stock: Number(r.stock || 0),
-      isActive: true,
-    }));
-
-    await Product.insertMany(docs);
-    res.json({ inserted: docs.length });
-  } catch (err) {
-    console.log("Bulk upload error:", err);
-    res.status(500).json({ message: "Failed bulk upload" });
+    console.error("GET /api/my-orders error:", err);
+    return res.status(500).json({ message: "Failed to load orders" });
   }
 });
 
 // ---------------------------
-//   START SERVER
+//  ADMIN: ORDERS DASHBOARD
+// ---------------------------
+app.get(
+  "/api/admin/orders",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const orders = await Order.find({}).sort({ createdAt: -1 });
+      return res.json(orders);
+    } catch (err) {
+      console.error("GET /api/admin/orders error:", err);
+      return res.status(500).json({ message: "Failed to load admin orders" });
+    }
+  }
+);
+
+// future: admin order status update (optional)
+app.put(
+  "/api/admin/orders/:id/status",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { status } = req.body || {};
+      const allowed = ["Processing", "Shipped", "Delivered", "Cancelled"];
+      if (!allowed.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      const updated = await Order.findByIdAndUpdate(
+        req.params.id,
+        { status },
+        { new: true }
+      );
+      if (!updated) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      return res.json(updated);
+    } catch (err) {
+      console.error("PUT /api/admin/orders/:id/status error:", err);
+      return res.status(500).json({ message: "Failed to update status" });
+    }
+  }
+);
+
+// ==================================
+//  SELLER PANEL / ADMIN: PRODUCTS
+// ==================================
+
+// list all products
+app.get(
+  "/api/admin/products",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const products = await Product.find({}).sort({ createdAt: -1 });
+      return res.json(products);
+    } catch (err) {
+      console.error("GET /api/admin/products error:", err);
+      return res.status(500).json({ message: "Failed to load products" });
+    }
+  }
+);
+
+// create new product
+app.post(
+  "/api/admin/products",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const data = {
+        name: body.name || body.title,
+        title: body.title || body.name,
+        description: body.description || "",
+        price: Number(body.price) || 0,
+        mrp: Number(body.mrp || body.price || 0),
+        category: body.category || "",
+        image: body.image || "",
+        images:
+          body.images && body.images.length
+            ? body.images
+            : body.image
+            ? [body.image]
+            : [],
+        stock: Number(body.stock || 0),
+        isActive: body.isActive !== false,
+      };
+      const product = await Product.create(data);
+      return res.status(201).json(product);
+    } catch (err) {
+      console.error("POST /api/admin/products error:", err);
+      return res.status(500).json({ message: "Failed to create product" });
+    }
+  }
+);
+
+// update product
+app.put(
+  "/api/admin/products/:id",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const update = {
+        name: body.name || body.title,
+        title: body.title || body.name,
+        description: body.description,
+        price: body.price,
+        mrp: body.mrp,
+        category: body.category,
+        image: body.image,
+        images: body.images,
+        stock: body.stock,
+        isActive: body.isActive,
+      };
+      const product = await Product.findByIdAndUpdate(
+        req.params.id,
+        update,
+        { new: true }
+      );
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      return res.json(product);
+    } catch (err) {
+      console.error("PUT /api/admin/products/:id error:", err);
+      return res.status(500).json({ message: "Failed to update product" });
+    }
+  }
+);
+
+// delete product
+app.delete(
+  "/api/admin/products/:id",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const deleted = await Product.findByIdAndDelete(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      return res.json({ message: "Deleted" });
+    } catch (err) {
+      console.error("DELETE /api/admin/products/:id error:", err);
+      return res.status(500).json({ message: "Failed to delete product" });
+    }
+  }
+);
+
+// bulk CSV upload
+app.post(
+  "/api/admin/products/bulk",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const rows = req.body?.rows || [];
+      if (!rows.length) {
+        return res.status(400).json({ message: "No rows provided" });
+      }
+
+      const docs = rows.map((row) => {
+        const price = Number(row.price || 0);
+        const mrp = Number(row.mrp || price || 0);
+        const stock = Number(row.stock || 0);
+        const image = row.image || "";
+        const images = image ? [image] : [];
+
+        return {
+          name: row.name || row.title,
+          title: row.title || row.name,
+          description: row.description || "",
+          price,
+          mrp,
+          category: row.category || "",
+          image,
+          images,
+          stock,
+          isActive: true,
+        };
+      });
+
+      await Product.insertMany(docs);
+      return res.json({ inserted: docs.length });
+    } catch (err) {
+      console.error("POST /api/admin/products/bulk error:", err);
+      return res.status(500).json({ message: "Bulk upload failed" });
+    }
+  }
+);
+
+// ---------------------------
+//  START SERVER
 // ---------------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`GT Mall backend running on port ${PORT}`);
+});
 
 export default app;
-
-
-
-
