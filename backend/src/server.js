@@ -1,77 +1,86 @@
-// server.js (FINAL VERSION)
+// backend/src/server.js
 
-require("dotenv").config();
-const express  = require("express");
-const path     = require("path");
-const Razorpay = require("razorpay");
-const crypto   = require("crypto");
-const cors     = require("cors");
-const mongoose = require("mongoose");
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
+import cors from "cors";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import mongoose from "mongoose";
+
+import { connectDB } from "./config/db.js";
+import Address from "./models/Address.js";
+import Order from "./models/Order.js";
+import { userFromHeaders } from "./middleware_auth.js";
+
+// -------------------- BASIC APP SETUP --------------------
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// -------------------- MONGODB CONNECT --------------------
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB error:", err));
+// MongoDB connect
+connectDB();
 
-// -------------------- ADDRESS MODEL --------------------
-const addressSchema = new mongoose.Schema(
+// -------------------- RAZORPAY SETUP --------------------
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// -------------------- CART MODEL (for cross-device cart sync) --------------------
+
+const cartItemSchema = new mongoose.Schema({
+  productId: String,
+  name: String,
+  price: Number,
+  quantity: Number,
+  image: String,
+});
+
+const cartSchema = new mongoose.Schema(
   {
-    userId:    { type: String },          // optional: Firebase UID
+    userId: { type: String, required: true },
     userEmail: { type: String, required: true },
-
-    name:      { type: String, required: true },
-    mobile:    { type: String, required: true },
-    altMobile: { type: String },
-    email:     { type: String, required: true },
-
-    pin:       { type: String, required: true },
-    locality:  { type: String, required: true },
-    areaStreet:{ type: String, required: true },
-    city:      { type: String, required: true },
-    state:     { type: String, required: true },
-    landmark:  { type: String },
-
-    type:      { type: String, default: "Home" },
-    isDefault: { type: Boolean, default: false }
+    items: [cartItemSchema],
   },
   { timestamps: true }
 );
 
-const Address = mongoose.model("Address", addressSchema);
-
-// -------------------- STATIC FILES --------------------
-app.use(express.static(path.join(__dirname, "public")));
+const Cart = mongoose.model("Cart", cartSchema);
 
 // -------------------- HELPERS --------------------
-function getUserFromHeaders(req) {
+
+function currentUser(req) {
+  // middleware_auth userFromHeaders will set req.user
+  if (!req.user) return null;
   return {
-    userId:    req.headers["x-user-id"] || null,
-    userEmail: req.headers["x-user-email"] || null,
-    userName:  req.headers["x-user-name"] || null
+    id: req.user.firebaseUid,
+    email: req.user.email,
+    name: req.user.name || "User",
   };
 }
 
+// Simple health check
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
 // -------------------- ADDRESS APIs --------------------
 
-// GET  /api/addresses/mine  -> current user ke saare addresses
-app.get("/api/addresses/mine", async (req, res) => {
+// GET  /api/addresses/mine  -> current user addresses
+app.get("/api/addresses/mine", userFromHeaders, async (req, res) => {
   try {
-    const { userEmail } = getUserFromHeaders(req);
-    if (!userEmail) {
+    const user = currentUser(req);
+    if (!user?.email) {
       return res.status(401).json({ message: "Auth required" });
     }
 
-    const addresses = await Address.find({ userEmail }).sort({
+    const addresses = await Address.find({ userEmail: user.email }).sort({
       isDefault: -1,
-      createdAt: 1
+      createdAt: 1,
     });
 
     return res.json(addresses);
@@ -81,11 +90,11 @@ app.get("/api/addresses/mine", async (req, res) => {
   }
 });
 
-// POST /api/addresses  -> naya address save
-app.post("/api/addresses", async (req, res) => {
+// POST /api/addresses  -> create new address
+app.post("/api/addresses", userFromHeaders, async (req, res) => {
   try {
-    const { userId, userEmail } = getUserFromHeaders(req);
-    if (!userEmail) {
+    const user = currentUser(req);
+    if (!user?.email || !user?.id) {
       return res.status(401).json({ message: "Auth required" });
     }
 
@@ -105,19 +114,19 @@ app.post("/api/addresses", async (req, res) => {
       return res.status(400).json({ message: "Invalid address data" });
     }
 
-    // Agar is address ko default bana rahe ho to purane default hata do
+    // clear old default if new one is default
     if (isDefault) {
       await Address.updateMany(
-        { userEmail },
+        { userEmail: user.email },
         { $set: { isDefault: false } }
       );
     }
 
     const doc = await Address.create({
-      userId,
-      userEmail,
+      userId: user.id,
+      userEmail: user.email,
       ...address,
-      isDefault: !!isDefault
+      isDefault: !!isDefault,
     });
 
     return res.status(201).json({ success: true, address: doc });
@@ -127,124 +136,37 @@ app.post("/api/addresses", async (req, res) => {
   }
 });
 
+// -------------------- CART APIs (cross-device sync) --------------------
 
-// -------------------- RAZORPAY INIT --------------------
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
-
-// Create order
-app.post("/api/create-order", async (req, res) => {
+// GET /api/cart/mine  -> current user cart items
+app.get("/api/cart/mine", userFromHeaders, async (req, res) => {
   try {
-    const { amount } = req.body;
-
-    if (!amount) {
-      return res.status(400).json({ error: "Amount is required" });
-    }
-
-    const options = {
-      amount: Math.round(amount * 100),
-      currency: "INR",
-      receipt: "gtm_" + Date.now()
-    };
-
-    const order = await razorpay.orders.create(options);
-    res.json(order);
-
-  } catch (error) {
-    console.error("Order Create Error:", error);
-    res.status(500).json({ error: "Order creation failed" });
-  }
-});
-
-// Verify payment
-app.post("/api/verify-payment", (req, res) => {
-  try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      address,
-      cartItems
-    } = req.body;
-
-    const sign = razorpay_order_id + "|" + razorpay_payment_id;
-
-    const expectedSign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign)
-      .digest("hex");
-
-    if (expectedSign === razorpay_signature) {
-      console.log("Payment Verified → ORDER:", razorpay_order_id);
-
-      // TODO: yahan Order ko MongoDB me save bhi kar sakte ho (future step)
-
-      return res.json({
-        success: true,
-        orderId: razorpay_order_id
-      });
-    }
-
-    res.json({ success: false });
-
-  } catch (error) {
-    console.error("Verify Error:", error);
-    res.status(500).json({ error: "Verification error" });
-  }
-});
-
-// SPA style fallback
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// -------------------- START SERVER --------------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`GT Mall running on port ${PORT}`));
-const cartItemSchema = new mongoose.Schema({
-  productId: String,
-  name: String,
-  price: Number,
-  quantity: Number,
-  image: String
-});
-
-const cartSchema = new mongoose.Schema(
-  {
-    userId:    { type: String, required: true },
-    userEmail: { type: String, required: true },
-    items:     [cartItemSchema]
-  },
-  { timestamps: true }
-);
-
-const Cart = mongoose.model("Cart", cartSchema);
-// GET /api/cart/mine -> current user ki cart
-app.get("/api/cart/mine", async (req, res) => {
-  try {
-    const { userId, userEmail } = getUserFromHeaders(req);
-    if (!userId || !userEmail) {
+    const user = currentUser(req);
+    if (!user?.id || !user?.email) {
       return res.status(401).json({ message: "Auth required" });
     }
 
-    let cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ userId: user.id });
     if (!cart) {
-      cart = await Cart.create({ userId, userEmail, items: [] });
+      cart = await Cart.create({
+        userId: user.id,
+        userEmail: user.email,
+        items: [],
+      });
     }
-    res.json(cart.items);
+
+    return res.json(cart.items || []);
   } catch (err) {
     console.error("GET /api/cart/mine error:", err);
-    res.status(500).json({ message: "Failed to load cart" });
+    return res.status(500).json({ message: "Failed to load cart" });
   }
 });
 
-// POST /api/cart/mine -> full cart overwrite (simple approach)
-app.post("/api/cart/mine", async (req, res) => {
+// POST /api/cart/mine  -> overwrite user cart
+app.post("/api/cart/mine", userFromHeaders, async (req, res) => {
   try {
-    const { userId, userEmail } = getUserFromHeaders(req);
-    if (!userId || !userEmail) {
+    const user = currentUser(req);
+    if (!user?.id || !user?.email) {
       return res.status(401).json({ message: "Auth required" });
     }
 
@@ -254,15 +176,141 @@ app.post("/api/cart/mine", async (req, res) => {
     }
 
     const cart = await Cart.findOneAndUpdate(
-      { userId },
-      { userEmail, items },
+      { userId: user.id },
+      { userEmail: user.email, items },
       { new: true, upsert: true }
     );
 
-    res.json({ success: true, items: cart.items });
+    return res.json({ success: true, items: cart.items || [] });
   } catch (err) {
     console.error("POST /api/cart/mine error:", err);
-    res.status(500).json({ message: "Failed to save cart" });
+    return res.status(500).json({ message: "Failed to save cart" });
   }
 });
 
+// -------------------- ORDERS & PAYMENT --------------------
+
+// GET /api/orders/mine  -> current user orders
+app.get("/api/orders/mine", userFromHeaders, async (req, res) => {
+  try {
+    const user = currentUser(req);
+    if (!user?.id) {
+      return res.status(401).json({ message: "Auth required" });
+    }
+
+    const orders = await Order.find({ userId: user.id }).sort({
+      createdAt: -1,
+    });
+
+    return res.json(orders);
+  } catch (err) {
+    console.error("GET /api/orders/mine error:", err);
+    return res.status(500).json({ message: "Failed to load orders" });
+  }
+});
+
+// POST /api/create-order  -> create Razorpay order
+app.post("/api/create-order", userFromHeaders, async (req, res) => {
+  try {
+    const user = currentUser(req);
+    if (!user?.id) {
+      return res.status(401).json({ message: "Auth required" });
+    }
+
+    let { amount } = req.body;
+    if (!amount || isNaN(Number(amount))) {
+      return res.status(400).json({ message: "Amount required" });
+    }
+
+    amount = Math.round(Number(amount) * 100); // to paise
+
+    const options = {
+      amount,
+      currency: "INR",
+      receipt: "gtm_" + Date.now(),
+    };
+
+    const order = await razorpay.orders.create(options);
+    return res.json(order);
+  } catch (error) {
+    console.error("Order Create Error:", error);
+    return res.status(500).json({ error: "Order creation failed" });
+  }
+});
+
+// POST /api/verify-payment  -> verify Razorpay payment & create Order doc
+app.post("/api/verify-payment", userFromHeaders, async (req, res) => {
+  try {
+    const user = currentUser(req);
+    if (!user?.id) {
+      return res.status(401).json({ message: "Auth required" });
+    }
+
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      address,
+      cartItems,
+    } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing payment data" });
+    }
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid signature" });
+    }
+
+    const items = Array.isArray(cartItems) ? cartItems : [];
+    const amount = items.reduce(
+      (sum, item) => sum + (Number(item.price) || 0) * (item.quantity || 1),
+      0
+    );
+
+    const orderDoc = await Order.create({
+      userId: user.id,
+      items: items.map((i) => ({
+        productId: i.id?.toString() || "",
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity || 1,
+        image: i.img || i.image || "",
+      })),
+      amount,
+      paymentStatus: "paid",
+      paymentId: razorpay_payment_id,
+      razorpayOrderId: razorpay_order_id,
+      razorpaySignature: razorpay_signature,
+      address,
+      status: "Processing",
+    });
+
+    // clear cart after successful order
+    await Cart.findOneAndUpdate({ userId: user.id }, { items: [] });
+
+    return res.json({ success: true, orderId: orderDoc._id });
+  } catch (error) {
+    console.error("Verify Error:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Verification error" });
+  }
+});
+
+// -------------------- START SERVER --------------------
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`GT Mall backend running on port ${PORT}`);
+});
