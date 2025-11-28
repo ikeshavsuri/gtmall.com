@@ -12,7 +12,6 @@ dotenv.config();
 import { connectDB } from "./config/db.js";
 
 // agar tumhare User.js me default export nahi hai to yeh sahi hai:
-import { User } from "./models/User.js";
 // Address, Order, Product ko maine default export assume kiya hai
 import Address from "./models/Address.js";
 import Order from "./models/Order.js";
