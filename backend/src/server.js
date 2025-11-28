@@ -17,6 +17,8 @@ import { User } from "./models/User.js";
 import Address from "./models/Address.js";
 import Order from "./models/Order.js";
 import Product from "./models/Product.js";
+import User from "./models/User.js";
+
 
 import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
 
