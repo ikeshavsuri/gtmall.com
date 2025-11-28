@@ -2,7 +2,7 @@
 
 import dotenv from "dotenv";
 dotenv.config();
-import Product from "./models/Product.js";
+import Product from "./assets/js/Product.js";
 
 
 
