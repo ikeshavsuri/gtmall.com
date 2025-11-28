@@ -6,18 +6,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// ---------------------------
-//  DB CONFIG
-// ---------------------------
 import { connectDB } from "./config/db.js";
-
-// agar tumhare User.js me default export nahi hai to yeh sahi hai:
-// Address, Order, Product ko maine default export assume kiya hai
+// import { User } from "./models/User.js";  // agar kahin use nahi ho raha to comment rehne do
 import Address from "./models/Address.js";
 import Order from "./models/Order.js";
-import Product from "./models/Product.js";
-import User from "./models/User.js";
-
 
 import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
 
@@ -86,6 +78,30 @@ const cartSchema = new mongoose.Schema(
 );
 
 const Cart = mongoose.model("Cart", cartSchema);
+// ------------- PRODUCT MODEL (for seller/admin panel) -------------
+const productSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    title: { type: String },
+    description: { type: String, default: "" },
+    price: { type: Number, required: true },
+    mrp: { type: Number },
+    category: { type: String, default: "" },
+
+    // main image
+    image: { type: String, default: "" },
+
+    // extra images
+    images: { type: [String], default: [] },
+
+    stock: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+const Product = mongoose.model("Product", productSchema);
+
 
 // save / replace cart
 app.post("/api/cart", userFromHeaders, async (req, res) => {
