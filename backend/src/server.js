@@ -12,8 +12,8 @@ import User from "./models/User.js";
 import Address from "./models/Address.js";
 import Order from "./models/Order.js";
 
-// ⚠ IMPORTANT: file name EXACTLY products.js
-import Product from "./models/product.js";
+// ⚠ IMPORTANT: file name EXACTLY Product.js
+import Product from "./models/Product.js";
 
 // ---------------------------
 //  AUTH MIDDLEWARE
