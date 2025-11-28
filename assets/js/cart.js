@@ -1,4 +1,43 @@
 // CART UTILITIES (local, plus optional sync later)
+function isLoggedIn() {
+  return !!localStorage.getItem("userUid");
+}
+
+// existing getCart / saveCart rehne do
+
+async function syncCartToServer() {
+  if (!isLoggedIn()) return;
+  const cart = getCart();
+  try {
+    await fetch(API_BASE + "/api/cart/mine", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ items: cart })
+    });
+  } catch (e) {
+    console.error("Failed to sync cart:", e);
+  }
+}
+
+// page load pe server se cart laane ke liye:
+document.addEventListener("DOMContentLoaded", async () => {
+  if (isLoggedIn()) {
+    try {
+      const res = await fetch(API_BASE + "/api/cart/mine", {
+        headers: authHeaders()
+      });
+      if (res.ok) {
+        const items = await res.json();
+        saveCart(items);
+      }
+    } catch (e) {
+      console.error("Failed to load cart from server:", e);
+    }
+  }
+
+  renderCartPage();
+  updateCartBadge();
+});
 
 function getCart() {
   try {
@@ -92,3 +131,5 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCartPage();
   updateCartBadge();
 });
+saveCart(cart);
+syncCartToServer();

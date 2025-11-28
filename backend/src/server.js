@@ -74,10 +74,10 @@ app.get("/api/addresses/mine", async (req, res) => {
       createdAt: 1
     });
 
-    res.json(addresses);
+    return res.json(addresses);
   } catch (err) {
     console.error("GET /api/addresses/mine error:", err);
-    res.status(500).json({ message: "Failed to load addresses" });
+    return res.status(500).json({ message: "Failed to load addresses" });
   }
 });
 
@@ -90,6 +90,7 @@ app.post("/api/addresses", async (req, res) => {
     }
 
     const { address, isDefault } = req.body;
+
     if (
       !address ||
       !address.name ||
@@ -104,7 +105,7 @@ app.post("/api/addresses", async (req, res) => {
       return res.status(400).json({ message: "Invalid address data" });
     }
 
-    // Agar is address ko default bana rahe ho to pehle purane ko default se hata do
+    // Agar is address ko default bana rahe ho to purane default hata do
     if (isDefault) {
       await Address.updateMany(
         { userEmail },
@@ -119,12 +120,13 @@ app.post("/api/addresses", async (req, res) => {
       isDefault: !!isDefault
     });
 
-    res.status(201).json({ success: true, address: doc });
+    return res.status(201).json({ success: true, address: doc });
   } catch (err) {
     console.error("POST /api/addresses error:", err);
-    res.status(500).json({ message: "Failed to save address" });
+    return res.status(500).json({ message: "Failed to save address" });
   }
 });
+
 
 // -------------------- RAZORPAY INIT --------------------
 const razorpay = new Razorpay({
@@ -201,3 +203,66 @@ app.get("*", (req, res) => {
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`GT Mall running on port ${PORT}`));
+const cartItemSchema = new mongoose.Schema({
+  productId: String,
+  name: String,
+  price: Number,
+  quantity: Number,
+  image: String
+});
+
+const cartSchema = new mongoose.Schema(
+  {
+    userId:    { type: String, required: true },
+    userEmail: { type: String, required: true },
+    items:     [cartItemSchema]
+  },
+  { timestamps: true }
+);
+
+const Cart = mongoose.model("Cart", cartSchema);
+// GET /api/cart/mine -> current user ki cart
+app.get("/api/cart/mine", async (req, res) => {
+  try {
+    const { userId, userEmail } = getUserFromHeaders(req);
+    if (!userId || !userEmail) {
+      return res.status(401).json({ message: "Auth required" });
+    }
+
+    let cart = await Cart.findOne({ userId });
+    if (!cart) {
+      cart = await Cart.create({ userId, userEmail, items: [] });
+    }
+    res.json(cart.items);
+  } catch (err) {
+    console.error("GET /api/cart/mine error:", err);
+    res.status(500).json({ message: "Failed to load cart" });
+  }
+});
+
+// POST /api/cart/mine -> full cart overwrite (simple approach)
+app.post("/api/cart/mine", async (req, res) => {
+  try {
+    const { userId, userEmail } = getUserFromHeaders(req);
+    if (!userId || !userEmail) {
+      return res.status(401).json({ message: "Auth required" });
+    }
+
+    const { items } = req.body;
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ message: "Items array required" });
+    }
+
+    const cart = await Cart.findOneAndUpdate(
+      { userId },
+      { userEmail, items },
+      { new: true, upsert: true }
+    );
+
+    res.json({ success: true, items: cart.items });
+  } catch (err) {
+    console.error("POST /api/cart/mine error:", err);
+    res.status(500).json({ message: "Failed to save cart" });
+  }
+});
+
