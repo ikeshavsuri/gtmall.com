@@ -1,85 +1,85 @@
-
+// backend/src/models/Order.js
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
-  items: [{
-    productId: String,
-    name: String,
-    price: Number,
-    quantity: Number,
-    image: String
-  }],
-  amount: Number,
-  paymentStatus: { type: String, default: "created" },
-  paymentId: String,
-  razorpayOrderId: String,
-  razorpaySignature: String,
-  address: Object,
-  status: { type: String, default: "Processing" }
-}, { timestamps: true });
-
-export const Order = mongoose.model("Order", orderSchema);
-const cartItemSchema = new mongoose.Schema({
-  productId: String,
-  name: String,
-  price: Number,
-  quantity: Number,
-  image: String
-});
-
-const cartSchema = new mongoose.Schema(
+const orderItemSchema = new mongoose.Schema(
   {
-    userId:    { type: String, required: true },
-    userEmail: { type: String, required: true },
-    items:     [cartItemSchema]
+    productId: {
+      type: String,
+    },
+    name: {
+      type: String,
+    },
+    price: {
+      type: Number,
+    },
+    quantity: {
+      type: Number,
+      default: 1,
+    },
+    image: {
+      type: String,
+    },
   },
-  { timestamps: true }
+  { _id: false }
 );
 
-const Cart = mongoose.model("Cart", cartSchema);
-// GET /api/cart/mine -> current user ki cart
-app.get("/api/cart/mine", async (req, res) => {
-  try {
-    const { userId, userEmail } = getUserFromHeaders(req);
-    if (!userId || !userEmail) {
-      return res.status(401).json({ message: "Auth required" });
-    }
+// address ko flexible rakha hai taaki jo bhi fields frontend se aaye, sab save ho jaye
+const addressSchema = new mongoose.Schema(
+  {},
+  { _id: false, strict: false } // strict false -> koi bhi keys aa sakti hain (name, phone, city, etc.)
+);
 
-    let cart = await Cart.findOne({ userId });
-    if (!cart) {
-      cart = await Cart.create({ userId, userEmail, items: [] });
-    }
-    res.json(cart.items);
-  } catch (err) {
-    console.error("GET /api/cart/mine error:", err);
-    res.status(500).json({ message: "Failed to load cart" });
+const orderSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: String,
+      required: true,
+    },
+    userEmail: {
+      type: String,
+      required: true,
+    },
+    items: {
+      type: [orderItemSchema],
+      required: true,
+      default: [],
+    },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    paymentId: {
+      type: String,
+    },
+    razorpayOrderId: {
+      type: String,
+    },
+    razorpaySignature: {
+      type: String,
+    },
+    address: {
+      type: addressSchema,
+    },
+    status: {
+      type: String,
+      enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
+      default: "Processing",
+    },
+  },
+  {
+    timestamps: true, // createdAt, updatedAt
   }
-});
+);
 
-// POST /api/cart/mine -> full cart overwrite (simple approach)
-app.post("/api/cart/mine", async (req, res) => {
-  try {
-    const { userId, userEmail } = getUserFromHeaders(req);
-    if (!userId || !userEmail) {
-      return res.status(401).json({ message: "Auth required" });
-    }
+const Order = mongoose.model("Order", orderSchema);
 
-    const { items } = req.body;
-    if (!Array.isArray(items)) {
-      return res.status(400).json({ message: "Items array required" });
-    }
-
-    const cart = await Cart.findOneAndUpdate(
-      { userId },
-      { userEmail, items },
-      { new: true, upsert: true }
-    );
-
-    res.json({ success: true, items: cart.items });
-  } catch (err) {
-    console.error("POST /api/cart/mine error:", err);
-    res.status(500).json({ message: "Failed to save cart" });
-  }
-});
+// IMPORTANT: default export add kiya hai, isse
+// `import Order from "./models/Order.js";` sahi chalega
+export default Order;
+export { Order };
 
