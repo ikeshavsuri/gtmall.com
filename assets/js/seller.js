@@ -12,7 +12,10 @@ async function fetchJson(url, options = {}) {
 
 function productPayloadFromForm() {
   const name = document.getElementById("name").value.trim();
-  const description = document.getElementById("description").value.trim();
+  const description = document
+    .getElementById("description")
+    .value.trim(); // ⬅ ye line important
+
   const price = Number(document.getElementById("price").value || 0);
   const mrp = Number(document.getElementById("mrp").value || price);
   const category = document.getElementById("category").value.trim();
@@ -21,8 +24,9 @@ function productPayloadFromForm() {
 
   return {
     name,
-    title: name, // in case your model uses title
-    description,
+    title: name,
+    description,              // ⬅ backend me save hoga
+    shortDescription: description, // (optional) agar detail page me chahiye
     price,
     mrp,
     category,
@@ -32,6 +36,7 @@ function productPayloadFromForm() {
     isActive: true,
   };
 }
+
 
 function fillFormWithProduct(p) {
   document.getElementById("productId").value = p._id || "";
