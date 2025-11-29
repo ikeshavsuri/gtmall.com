@@ -227,6 +227,22 @@ document.addEventListener("DOMContentLoaded", () => {
         statusEl.textContent = "Save failed: " + err.message;
       }
     });
+      // Image file -> base64 -> image input
+  const imageFileInput = document.getElementById("imageFile");
+  if (imageFileInput) {
+    imageFileInput.addEventListener("change", () => {
+      const file = imageFileInput.files && imageFileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        // jo URL field hai usme base64 string daal do
+        document.getElementById("image").value = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
 
   document
     .getElementById("resetFormBtn")

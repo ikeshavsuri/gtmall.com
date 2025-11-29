@@ -1,14 +1,9 @@
 // assets/js/shop.js
-// yeh file seller panel se aaye huye products ko backend se fetch karke
-// shop page par dikhayegi
 
 async function fetchProductsFromApi() {
   try {
     const res = await fetch(`${API_BASE}/api/products`);
-    if (!res.ok) {
-      console.error("Failed to fetch products", res.status);
-      return [];
-    }
+    if (!res.ok) return [];
     const data = await res.json();
     return Array.isArray(data) ? data : [];
   } catch (err) {
@@ -18,7 +13,6 @@ async function fetchProductsFromApi() {
 }
 
 function handleAddToCartFromShop(p) {
-  // agar tumhare cart.js me addToCart naam ka function hai:
   if (typeof addToCart === "function") {
     addToCart({
       id: p._id,
@@ -27,7 +21,7 @@ function handleAddToCartFromShop(p) {
       img: p.image || (p.images && p.images[0]) || "",
     });
   } else {
-    console.warn("addToCart function not found");
+    console.warn("addToCart not found");
   }
 }
 
@@ -40,7 +34,7 @@ function renderProductsOnShop(products) {
     return;
   }
 
-  container.innerHTML = ""; // clear old html
+  container.innerHTML = "";
 
   products.forEach((p) => {
     const card = document.createElement("div");
@@ -54,26 +48,34 @@ function renderProductsOnShop(products) {
     const hasDiscount = mrp > price;
 
     card.innerHTML = `
-      <div class="product-image-wrap">
-        <img src="${imgUrl}" alt="${name}">
-      </div>
-      <h3 class="product-title">${name}</h3>
-      <div class="product-price-row">
-        <span class="product-price">₹${price}</span>
-        ${
-          hasDiscount
-            ? `<span class="product-mrp">₹${mrp}</span>
-               <span class="product-off">${
-                 Math.round(((mrp - price) / mrp) * 100) || 0
-               }% off</span>`
-            : ""
-        }
-      </div>
-      <button class="btn btn-sm btn-primary">Add to cart</button>
+      <a class="product-card-link" href="product.html?id=${p._id}">
+        <div class="product-image-wrap">
+          <img src="${imgUrl}" alt="${name}">
+        </div>
+        <div class="product-body">
+          <h3 class="product-title">${name}</h3>
+          <div class="product-price-row">
+            <span class="product-price">₹${price}</span>
+            ${
+              hasDiscount
+                ? `<span class="product-mrp">₹${mrp}</span>
+                   <span class="product-off">${Math.round(
+                     ((mrp - price) / mrp) * 100
+                   )}% off</span>`
+                : ""
+            }
+          </div>
+        </div>
+      </a>
+      <button class="btn btn-sm btn-primary product-card-cart-btn">Add to cart</button>
     `;
 
-    const btn = card.querySelector("button");
-    btn.addEventListener("click", () => handleAddToCartFromShop(p));
+    card
+      .querySelector(".product-card-cart-btn")
+      .addEventListener("click", (e) => {
+        e.preventDefault();
+        handleAddToCartFromShop(p);
+      });
 
     container.appendChild(card);
   });

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Product | GT Mall</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="product-page">
+      <section class="product-main">
+        <div class="product-main-left">
+          <img id="prodImage" src="" alt="Product" />
+        </div>
+        <div class="product-main-right">
+          <h1 id="prodName"></h1>
+          <p id="prodCategory" class="prod-category"></p>
+
+          <div class="prod-price-block">
+            <span id="prodPrice" class="prod-price"></span>
+            <span id="prodMrp" class="prod-mrp"></span>
+            <span id="prodOff" class="prod-off"></span>
+          </div>
+
+          <p id="prodShortDesc"></p>
+
+          <div class="prod-qty-row">
+            <button id="qtyMinus">-</button>
+            <span id="qtyValue">1</span>
+            <button id="qtyPlus">+</button>
+          </div>
+
+          <div class="prod-actions">
+            <button id="addToCartBtn" class="btn btn-primary">
+              Add to cart
+            </button>
+            <button id="buyNowBtn" class="btn btn-secondary">
+              Buy now
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="product-desc-section">
+        <h2>Description</h2>
+        <p id="prodDescription"></p>
+      </section>
+
+      <section class="similar-products-section">
+        <h2>Similar Products</h2>
+        <div id="similarProducts" class="products-grid"></div>
+      </section>
+    </main>
+
+    <script src="assets/js/cart.js"></script>
+    <script src="assets/js/navbar.js"></script>
+    <script src="assets/js/load-navbar.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/product-detail.js"></script>
+  </body>
+</html>

@@ -295,6 +295,54 @@ app.get("/api/products/:id", async (req, res) => {
 // ==================================
 //  SELLER PANEL / ADMIN: PRODUCTS
 // ==================================
+// PUBLIC: All products (for shop page)
+app.get("/api/products", async (req, res) => {
+  try {
+    const products = await Product.find({
+      $or: [{ isActive: true }, { isActive: { $exists: false } }],
+    }).sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (err) {
+    console.error("GET /api/products error:", err);
+    res.status(500).json({ message: "Failed to load products" });
+  }
+});
+
+// PUBLIC: Single product by id (for product detail page)
+app.get("/api/products/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product || product.isActive === false) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(product);
+  } catch (err) {
+    console.error("GET /api/products/:id error:", err);
+    res.status(500).json({ message: "Failed to load product" });
+  }
+});
+
+// PUBLIC: Similar products (same category, excluding current)
+app.get("/api/products/:id/similar", async (req, res) => {
+  try {
+    const current = await Product.findById(req.params.id);
+    if (!current) return res.json([]);
+
+    const similar = await Product.find({
+      _id: { $ne: current._id },
+      category: current.category,
+      $or: [{ isActive: true }, { isActive: { $exists: false } }],
+    })
+      .sort({ createdAt: -1 })
+      .limit(8);
+
+    res.json(similar);
+  } catch (err) {
+    console.error("GET /api/products/:id/similar error:", err);
+    res.status(500).json({ message: "Failed to load similar products" });
+  }
+});
 
 // list all products
 app.get(
