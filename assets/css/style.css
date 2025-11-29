@@ -309,3 +309,48 @@ nav.navbar {
     flex-direction: column;
   }
 }
+/* ============ GLOBAL BUTTONS ============ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 9999px;            /* full round */
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+/* main green button (Add to cart etc.) */
+.btn-primary {
+  background: #28a745;
+  color: #fff;
+}
+
+/* secondary (Buy now / grey) */
+.btn-secondary {
+  background: #f44336;
+  color: #fff;
+}
+
+/* small size buttons (card me) */
+.btn-sm {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/* hover effect */
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  opacity: 0.95;
+}
+
+/* focus */
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
+}

@@ -1,8 +1,8 @@
-/* Product page layout */
+/* ============ PRODUCT PAGE LAYOUT ============ */
 
 .product-page {
   max-width: 1200px;
-  margin: 20px auto 40px;
+  margin: 24px auto 40px;
   padding: 0 16px;
 }
 
@@ -18,19 +18,30 @@
 
 .product-main-left img {
   width: 100%;
-  max-height: 450px;
+  max-height: 480px;
   object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  background: #f5f5f5;
 }
 
 .product-main-right {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.product-main-right h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .prod-category {
   color: #777;
-  margin: 4px 0 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
 }
 
 .prod-price-block {
@@ -49,33 +60,46 @@
 .prod-mrp {
   text-decoration: line-through;
   color: #999;
+  font-size: 14px;
 }
 
 .prod-off {
   color: #0a8d48;
   font-weight: 600;
+  font-size: 13px;
 }
 
 .prod-short-desc {
-  margin-bottom: 12px;
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 16px;
 }
 
 .prod-qty-row {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin: 12px 0 16px;
+  margin: 12px 0 18px;
 }
 
 .prod-qty-row button {
   width: 32px;
   height: 32px;
-  border-radius: 4px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+
+.prod-qty-row #qtyValue {
+  min-width: 24px;
+  text-align: center;
 }
 
 .prod-actions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
 }
 
@@ -84,7 +108,18 @@
   margin-top: 24px;
 }
 
-/* footer basic alignment */
+.product-desc-section h2,
+.similar-products-section h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.product-desc-section p {
+  font-size: 14px;
+  color: #444;
+}
+
+/* footer */
 .site-footer {
   text-align: center;
   padding: 16px 0 24px;
@@ -97,9 +132,14 @@
   font-size: 14px;
 }
 
-/* Responsive */
+/* ============ RESPONSIVE ============ */
+
 @media (max-width: 768px) {
   .product-main {
     flex-direction: column;
+  }
+
+  .product-main-left img {
+    max-height: 360px;
   }
 }

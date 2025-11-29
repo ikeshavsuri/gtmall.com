@@ -19,6 +19,41 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
+// existing singular routes agar already hain to unko rehne do
+// === SINGULAR ===
+// app.get("/api/address", ...)
+// app.post("/api/address", ...)
+
+// === NEW: PLURAL ROUTES (frontend ke liye) ===
+app.get("/api/addresses", userFromHeaders, async (req, res) => {
+  try {
+    const addresses = await Address.find({ userId: req.user.id }).sort({
+      createdAt: -1,
+    });
+    res.json(addresses);
+  } catch (err) {
+    console.error("GET /api/addresses error:", err);
+    res.status(500).json({ message: "Failed to load addresses" });
+  }
+});
+
+app.post("/api/addresses", userFromHeaders, async (req, res) => {
+  try {
+    const user = req.user;
+    const body = req.body || {};
+
+    const addr = await Address.create({
+      userId: user.id,
+      ...body,
+    });
+
+    res.status(201).json(addr);
+  } catch (err) {
+    console.error("POST /api/addresses error:", err);
+    res.status(500).json({ message: "Failed to add address" });
+  }
+});
+
 
 // ---------------------------
 //  RAZORPAY SETUP
