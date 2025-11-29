@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import Razorpay from "razorpay";
+import fetch from "node-fetch";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -55,35 +55,164 @@ app.post("/api/addresses", userFromHeaders, async (req, res) => {
 });
 
 
-// ---------------------------
-//  RAZORPAY SETUP
-// ---------------------------
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+/**
+ * Cashfree Payment Gateway Setup (Standard Checkout)
+ * Uses environment variables:
+ *  - CASHFREE_APP_ID
+ *  - CASHFREE_SECRET_KEY
+ *  - CASHFREE_API_VERSION (optional, default "2022-09-01")
+ *  - CASHFREE_ENV ("sandbox" | "production", default "sandbox")
+ */
+const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
+const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
+const CASHFREE_API_VERSION = process.env.CASHFREE_API_VERSION || "2022-09-01";
+const CASHFREE_ENV = process.env.CASHFREE_ENV || "sandbox";
 
-// (optional) frontend agar Razorpay order create route use kare:
-app.post("/api/razorpay/create-order", userFromHeaders, async (req, res) => {
+const CASHFREE_BASE_URL =
+  CASHFREE_ENV === "production"
+    ? "https://api.cashfree.com/pg"
+    : "https://sandbox.cashfree.com/pg";
+
+// Create Cashfree order and return payment_session_id + order_id
+app.post("/api/cashfree/create-order", userFromHeaders, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, customerPhone } = req.body || {};
     if (!amount) {
       return res.status(400).json({ message: "Amount is required" });
     }
+    if (!CASHFREE_APP_ID || !CASHFREE_SECRET_KEY) {
+      return res
+        .status(500)
+        .json({ message: "Cashfree keys not configured on server" });
+    }
 
-    const options = {
-      amount: Math.round(Number(amount) * 100), // in paise
-      currency: "INR",
-      receipt: `rcpt_${Date.now()}`,
+    const user = req.user || {};
+    const cfOrderId = `order_${Date.now()}`;
+
+    const payload = {
+      order_id: cfOrderId,
+      order_amount: Number(amount),
+      order_currency: "INR",
+      customer_details: {
+        customer_id: user.id || user.email || "guest",
+        customer_name: user.name || user.email || "Guest",
+        customer_email: user.email || "",
+        customer_phone: customerPhone || "",
+      },
+      order_meta: {
+        // Cashfree will replace {order_id} with actual order id
+        return_url: "https://gtmall.run.place/checkout.html?cf_order_id={order_id}",
+      },
     };
 
-    const order = await razorpay.orders.create(options);
-    return res.json(order);
+    const cfRes = await fetch(CASHFREE_BASE_URL + "/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-version": CASHFREE_API_VERSION,
+        "x-client-id": CASHFREE_APP_ID,
+        "x-client-secret": CASHFREE_SECRET_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await cfRes.json();
+    if (!cfRes.ok) {
+      console.error("Cashfree create order error:", data);
+      return res
+        .status(500)
+        .json({ message: "Failed to create Cashfree order", details: data });
+    }
+
+    return res.json({
+      orderId: data.order_id || cfOrderId,
+      cfOrderId: data.order_id || cfOrderId,
+      paymentSessionId: data.payment_session_id,
+    });
   } catch (err) {
-    console.error("Razorpay create order error:", err);
-    return res.status(500).json({ message: "Failed to create payment order" });
+    console.error("Cashfree create-order error:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to create payment order" });
   }
 });
+
+// Confirm Cashfree payment and create local Order document
+app.post("/api/cashfree/confirm", userFromHeaders, async (req, res) => {
+  try {
+    const { cfOrderId, items, amount, address } = req.body || {};
+    if (!cfOrderId) {
+      return res.status(400).json({ message: "cfOrderId is required" });
+    }
+    if (!Array.isArray(items) || !items.length) {
+      return res.status(400).json({ message: "No items in order" });
+    }
+
+    if (!CASHFREE_APP_ID || !CASHFREE_SECRET_KEY) {
+      return res
+        .status(500)
+        .json({ message: "Cashfree keys not configured on server" });
+    }
+
+    const verifyRes = await fetch(
+      `${CASHFREE_BASE_URL}/orders/${cfOrderId}`,
+      {
+        method: "GET",
+        headers: {
+          "x-api-version": CASHFREE_API_VERSION,
+          "x-client-id": CASHFREE_APP_ID,
+          "x-client-secret": CASHFREE_SECRET_KEY,
+        },
+      }
+    );
+
+    const orderInfo = await verifyRes.json();
+    if (!verifyRes.ok) {
+      console.error("Cashfree get order error:", orderInfo);
+      return res.status(500).json({
+        message: "Failed to verify payment with Cashfree",
+        details: orderInfo,
+      });
+    }
+
+    if (orderInfo.order_status !== "PAID") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is not paid yet",
+        status: orderInfo.order_status,
+      });
+    }
+
+    const totalAmount = Number(amount || orderInfo.order_amount || 0);
+
+    const orderDoc = await Order.create({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      items: items.map((i) => ({
+        productId: i.id?.toString?.() || i.productId || "",
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity || 1,
+        image: i.img || i.image || "",
+      })),
+      amount: totalAmount,
+      paymentStatus: "paid",
+      paymentId: orderInfo.cf_order_id || "",
+      razorpayOrderId: orderInfo.order_id || "",
+      razorpaySignature: "", // not used for Cashfree
+      address,
+      status: "Processing",
+    });
+
+    return res.json({ success: true, order: orderDoc });
+  } catch (err) {
+    console.error("Cashfree confirm error:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to confirm payment" });
+  }
+});
+
 
 // ---------------------------
 //  SIMPLE HEALTH CHECK
@@ -169,6 +298,41 @@ app.get("/api/cart", userFromHeaders, async (req, res) => {
     return res.status(500).json({ message: "Failed to load cart" });
   }
 });
+
+// Backward-compatible aliases for older frontend endpoints
+app.post("/api/cart/mine", userFromHeaders, async (req, res) => {
+  try {
+    const { items } = req.body || {};
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ message: "items array required" });
+    }
+
+    const doc = await Cart.findOneAndUpdate(
+      { userId: req.user.id },
+      { userId: req.user.id, userEmail: req.user.email, items },
+      { upsert: true, new: true }
+    );
+
+    return res.json(doc);
+  } catch (err) {
+    console.error("POST /api/cart/mine error:", err);
+    return res.status(500).json({ message: "Failed to save cart" });
+  }
+});
+
+app.get("/api/cart/mine", userFromHeaders, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user.id });
+    if (!cart) {
+      return res.json([]);
+    }
+    return res.json(cart.items || []);
+  } catch (err) {
+    console.error("GET /api/cart/mine error:", err);
+    return res.status(500).json({ message: "Failed to load cart" });
+  }
+});
+
 
 // ---------------------------
 //  ADDRESS APIs

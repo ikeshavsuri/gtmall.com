@@ -19,16 +19,41 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalEl     = document.getElementById("checkoutTotal");
   const payNowBtn   = document.getElementById("btnPayNow");
 
-  // 1) Load cart from localStorage
+
+  // 1) Decide source of items: Buy Now (single product) OR full cart
+  const urlParams = new URLSearchParams(window.location.search);
+  const checkoutMode = urlParams.get("mode"); // "buynow" | null
+  const cfOrderParam = urlParams.get("cf_order_id") || urlParams.get("order_id");
+
   let cart = [];
-  try {
-    cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
-  } catch (err) {
-    console.error("Cart parse error:", err);
-    cart = [];
+
+  // Prefer Buy Now item if mode=buynow and stored
+  if (checkoutMode === "buynow") {
+    try {
+      const buyNowRaw = localStorage.getItem("buyNowItem");
+      if (buyNowRaw) {
+        const buyNowItem = JSON.parse(buyNowRaw);
+        if (buyNowItem && buyNowItem.id) {
+          cart = [buyNowItem];
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse buyNowItem:", e);
+    }
+  }
+
+  // Fallback to normal cart
+  if (!cart.length) {
+    try {
+      cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    } catch (err) {
+      console.error("Cart parse error:", err);
+      cart = [];
+    }
   }
 
   let subtotal = 0;
+
 
   if (!cart || cart.length === 0) {
     if (itemsList) {
@@ -63,26 +88,38 @@ document.addEventListener("DOMContentLoaded", () => {
   if (subtotalEl) subtotalEl.textContent = "₹" + subtotal.toFixed(2);
   if (totalEl) totalEl.textContent = "₹" + subtotal.toFixed(2);
 
-  // 3) Handle Pay Now click
+
+  // 3) Handle Pay Now click (Cashfree Standard Checkout)
   if (payNowBtn) {
     payNowBtn.addEventListener("click", async () => {
       // ---- ADDRESS READ + VALIDATION ----
-      const name      = document.getElementById("addrName")?.value.trim();
-      const mobile    = document.getElementById("addrMobile")?.value.trim();
-      const email     = document.getElementById("addrEmail")?.value.trim();
-      const pin       = document.getElementById("addrPincode")?.value.trim();
-      const locality  = document.getElementById("addrLocality")?.value.trim();
-      const areaStreet= document.getElementById("addrAreaStreet")?.value.trim();
-      const city      = document.getElementById("addrCity")?.value.trim();
-      const state     = document.getElementById("addrState")?.value.trim();
-      const landmark  = document.getElementById("addrLandmark")?.value.trim();
-      const altMobile = document.getElementById("addrAltMobile")?.value.trim();
-      const addrType  = document.querySelector("input[name='addrType']:checked")?.value || "Home";
+      const name       = document.getElementById("addrName")?.value.trim();
+      const mobile     = document.getElementById("addrMobile")?.value.trim();
+      const email      = document.getElementById("addrEmail")?.value.trim();
+      const pin        = document.getElementById("addrPincode")?.value.trim();
+      const locality   = document.getElementById("addrLocality")?.value.trim();
+      const areaStreet = document.getElementById("addrAreaStreet")?.value.trim();
+      const city       = document.getElementById("addrCity")?.value.trim();
+      const state      = document.getElementById("addrState")?.value.trim();
+      const landmark   = document.getElementById("addrLandmark")?.value.trim();
+      const altMobile  = document.getElementById("addrAltMobile")?.value.trim();
+      const addrType   =
+        document.querySelector("input[name='addrType']:checked")?.value ||
+        "Home";
 
       // Basic validation
-      if (!name || !mobile || mobile.length !== 10 ||
-          !pin || pin.length < 4 ||
-          !locality || !areaStreet || !city || !state || !email) {
+      if (
+        !name ||
+        !mobile ||
+        mobile.length !== 10 ||
+        !pin ||
+        pin.length < 4 ||
+        !locality ||
+        !areaStreet ||
+        !city ||
+        !state ||
+        !email
+      ) {
         alert("Please fill all required address fields correctly.");
         return;
       }
@@ -98,145 +135,77 @@ document.addEventListener("DOMContentLoaded", () => {
         city,
         state,
         landmark,
-        type: addrType
+        addrType,
       };
 
-      // ---- LOCAL STORAGE (old system ke liye) ----
-      localStorage.setItem("lastAddress", JSON.stringify(address));
-
-      // Agar login se pehle aaye hain to bhi navbar me naam/email aa jaye
-      if (!localStorage.getItem("userEmail")) {
-        localStorage.setItem("userEmail", email);
-      }
-      if (!localStorage.getItem("userName")) {
-        localStorage.setItem("userName", name);
+      if (!cart.length) {
+        alert("Your cart is empty.");
+        return;
       }
 
-      // ---- NEW: Address Mongo DB me save karo (My Addresses ke liye) ----
-      // Backend me /api/addresses route hona chahiye (GET/POST)
       try {
-        await fetch(API_BASE + "/api/addresses", {
+        payNowBtn.disabled = true;
+        payNowBtn.textContent = "Processing...";
+
+        // 3a) Save address in backend (for My Addresses)
+        try {
+          await fetch(API_BASE + "/api/addresses", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({
+              address,
+              isDefault: true,
+            }),
+          });
+        } catch (addrErr) {
+          console.error("Failed to save address in DB:", addrErr);
+          // continue payment flow anyway
+        }
+
+        // 3b) Ask backend to create Cashfree order
+        const createRes = await fetch(API_BASE + "/api/cashfree/create-order", {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify({
-            address,
-            isDefault: true   // first address / latest ko default bana do
-          })
-        });
-        // Agar yahan error bhi aaye to payment flow ko block nahi karenge
-      } catch (e) {
-        console.error("Failed to save address in DB:", e);
-      }
-
-      // 3b) Create Razorpay order from backend (Render backend use karo)
-      try {
-        payNowBtn.disabled = true;
-        payNowBtn.textContent = "Creating Order...";
-
-        const res = await fetch(API_BASE + "/api/create-order", {
-          method: "POST",
-          headers: authHeaders(),
-          body: JSON.stringify({ amount: subtotal })
+            amount: subtotal,
+            customerPhone: mobile,
+          }),
         });
 
-        const order = await res.json();
-        if (!order || !order.id) {
-          console.error("Order response:", order);
-          alert("Unable to create order. Please try again.");
+        const cfOrder = await createRes.json();
+        if (!createRes.ok || !cfOrder.paymentSessionId) {
+          console.error("Cashfree order response:", cfOrder);
+          alert("Unable to create payment order. Please try again.");
           payNowBtn.disabled = false;
           payNowBtn.textContent = "Proceed to Payment";
           return;
         }
 
-        // 3c) Razorpay options
-        const options = {
-          // 🔑 YAHAN APNA PUBLIC KEY DAALNA (test / live)
-          key: "rzp_test_RjwJyS3ad0hBEe", // TODO: replace with your real KEY_ID
-          amount: order.amount,
-          currency: order.currency,
-          name: "GT Mall",
-          description: "Order Payment",
-          order_id: order.id,
-          prefill: {
-            name: name,
-            email: email,
-            contact: mobile
-          },
-          notes: {
-            address: `${areaStreet}, ${locality}, ${city} - ${pin}, ${state}`
-          },
-          theme: {
-            color: "#0a8239"
-          },
-          handler: async function (response) {
-            // 3d) Verify payment on backend
-            try {
-              const verifyRes = await fetch(API_BASE + "/api/verify-payment", {
-                method: "POST",
-                headers: authHeaders(),
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  address,
-                  cartItems: cart
-                })
-              });
+        // Store pending cart + address so we can create local order after redirect
+        localStorage.setItem("pendingOrderCart", JSON.stringify(cart));
+        localStorage.setItem("pendingOrderAddress", JSON.stringify(address));
 
-              const verifyData = await verifyRes.json();
-              if (verifyData.success) {
-                // Clear cart
-                localStorage.removeItem("cartItems");
+        // 3c) Open Cashfree checkout (redirect mode)
+        if (typeof Cashfree !== "function") {
+          alert("Payment SDK not loaded. Please refresh the page.");
+          payNowBtn.disabled = false;
+          payNowBtn.textContent = "Proceed to Payment";
+          return;
+        }
 
-                // Save last order for My Orders page (abhi localStorage based)
-                localStorage.setItem("lastOrder", JSON.stringify({
-                  orderId: verifyData.orderId || order.id,
-                  amount: subtotal,
-                  date: new Date().toISOString(),
-                  status: "Processing"
-                }));
-
-                // Show modal agar hai to
-                const orderIdEl = document.getElementById("successOrderId");
-                if (orderIdEl) {
-                  orderIdEl.textContent = verifyData.orderId || order.id;
-                }
-                const modalEl = document.getElementById("orderSuccessModal");
-                if (modalEl && window.bootstrap) {
-                  const modal = new bootstrap.Modal(modalEl);
-                  modal.show();
-                } else {
-                  alert("Payment successful! Order ID: " + (verifyData.orderId || order.id));
-                  window.location.href = "my_orders.html";
-                }
-              } else {
-                alert("Payment verification failed. Please contact support.");
-              }
-            } catch (err) {
-              console.error("Verify payment error:", err);
-              alert("Something went wrong after payment. Please contact support.");
-            } finally {
-              payNowBtn.disabled = false;
-              payNowBtn.textContent = "Proceed to Payment";
-            }
-          }
-        };
-
-        payNowBtn.disabled = false;
-        payNowBtn.textContent = "Proceed to Payment";
-
-        const rzp = new Razorpay(options);
-        rzp.open();
-
+        const cashfree = Cashfree({ mode: "sandbox" }); // test mode
+        cashfree.checkout({
+          paymentSessionId: cfOrder.paymentSessionId,
+          redirectTarget: "_self", // redirect to Cashfree hosted page
+        });
       } catch (err) {
-        console.error("Create order error:", err);
+        console.error("Cashfree payment init error:", err);
         alert("Unable to start payment. Please try again.");
         payNowBtn.disabled = false;
         payNowBtn.textContent = "Proceed to Payment";
       }
     });
   }
-
   // 4) Track Order button
   const trackBtn = document.getElementById("btnTrackOrder");
   if (trackBtn) {
