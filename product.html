@@ -4,79 +4,77 @@
     <meta charset="UTF-8" />
     <title>Product | GT Mall</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <!-- main site css -->
-    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+
     <!-- product page specific css -->
-    <link rel="stylesheet" href="assets/css/product.css" />
+    <link rel="stylesheet" href="/assets/css/product.css" />
   </head>
+
   <body>
     <!-- Navbar load hoga yahan -->
     <div id="navbar-container"></div>
 
     <main class="product-page">
-  <section class="product-main">
-    <div class="product-main-left">
-      <img id="prodImage" src="" alt="Product" />
-    </div>
-    <div class="product-main-right">
-      <h1 id="prodName"></h1>
-      <p id="prodCategory" class="prod-category"></p>
+      <section class="product-main">
+        <div class="product-main-left">
+          <img id="prodImage" src="" alt="Product" />
+        </div>
 
-      <div class="prod-price-block">
-        <span id="prodPrice" class="prod-price"></span>
-        <span id="prodMrp" class="prod-mrp"></span>
-        <span id="prodOff" class="prod-off"></span>
-      </div>
+        <div class="product-main-right">
+          <h1 id="prodName"></h1>
+          <p id="prodCategory" class="prod-category"></p>
 
-      <p id="prodShortDesc" class="prod-short-desc"></p>
+          <div class="prod-price-block">
+            <span id="prodPrice" class="prod-price"></span>
+            <span id="prodMrp" class="prod-mrp"></span>
+            <span id="prodOff" class="prod-off"></span>
+          </div>
 
-      <div class="prod-qty-row">
-        <button id="qtyMinus">-</button>
-        <span id="qtyValue">1</span>
-        <button id="qtyPlus">+</button>
-      </div>
+          <p id="prodShortDesc" class="prod-short-desc"></p>
 
-      <div class="prod-actions">
-        <button id="addToCartBtn" class="btn btn-primary">
-          Add to cart
-        </button>
-        <button id="buyNowBtn" class="btn btn-secondary">
-          Buy now
-        </button>
-      </div>
-    </div>
-  </section>
+          <div class="prod-qty-row">
+            <button id="qtyMinus">-</button>
+            <span id="qtyValue">1</span>
+            <button id="qtyPlus">+</button>
+          </div>
 
-  <section class="product-desc-section">
-    <h2>Description</h2>
-    <p id="prodDescription"></p>
-  </section>
+          <div class="prod-actions">
+            <button id="addToCartBtn" class="btn btn-primary">Add to cart</button>
+            <button id="buyNowBtn" class="btn btn-secondary">Buy now</button>
+          </div>
+        </div>
+      </section>
 
-  <section class="similar-products-section">
-    <h2>Similar Products</h2>
-    <div id="similarProducts" class="products-grid"></div>
-  </section>
-</main>
+      <section class="product-desc-section">
+        <h2>Description</h2>
+        <p id="prodDescription"></p>
+      </section>
 
+      <section class="similar-products-section">
+        <h2>Similar Products</h2>
+        <div id="similarProducts" class="products-grid"></div>
+      </section>
+    </main>
 
-    <!-- Footer same jaise dusre pages -->
     <footer class="site-footer">
       <div class="footer-links">
-        <a href="about.html">About</a> |
-        <a href="contact.html">Contact</a> |
-        <a href="faq.html">FAQ</a> |
-        <a href="terms.html">Terms</a> |
-        <a href="privacy.html">Privacy</a> |
-        <a href="refund.html">Refund Policy</a>
+        <a href="/about.html">About</a> |
+        <a href="/contact.html">Contact</a> |
+        <a href="/faq.html">FAQ</a> |
+        <a href="/terms.html">Terms</a> |
+        <a href="/privacy.html">Privacy</a> |
+        <a href="/refund.html">Refund Policy</a>
       </div>
       <p>© 2025 GT Mall. All rights reserved.</p>
     </footer>
 
     <!-- scripts -->
-    <script src="assets/js/cart.js"></script>
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/load-navbar.js"></script>
-    <script src="assets/js/api.js"></script>
-    <script src="assets/js/product-detail.js"></script>
+    <script src="/assets/js/cart.js"></script>
+    <script src="/assets/js/navbar.js"></script>
+    <script src="/assets/js/load-navbar.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/product-detail.js"></script>
   </body>
 </html>
