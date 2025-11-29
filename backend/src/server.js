@@ -265,6 +265,32 @@ app.put(
     }
   }
 );
+// PUBLIC: sab users ke liye products list
+app.get("/api/products", async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: true }).sort({
+      createdAt: -1,
+    });
+    res.json(products);
+  } catch (err) {
+    console.error("GET /api/products error:", err);
+    res.status(500).json({ message: "Failed to load products" });
+  }
+});
+
+// PUBLIC: single product by id (product page ke liye)
+app.get("/api/products/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product || !product.isActive) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(product);
+  } catch (err) {
+    console.error("GET /api/products/:id error:", err);
+    res.status(500).json({ message: "Failed to load product" });
+  }
+});
 
 // ==================================
 //  SELLER PANEL / ADMIN: PRODUCTS
