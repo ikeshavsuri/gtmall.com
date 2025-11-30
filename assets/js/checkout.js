@@ -1,6 +1,106 @@
 // public/js/checkout.js
 
 
+// When Cashfree redirects back with cf_order_id in URL, confirm payment on backend
+async function handleCashfreeReturn(cfOrderId) {
+  try {
+    if (!cfOrderId) return;
+
+    // avoid duplicate confirmations on refresh
+    const last = localStorage.getItem("lastConfirmedCfOrderId");
+    if (last && last === String(cfOrderId)) {
+      return;
+    }
+
+    let items = [];
+    let address = null;
+
+    try {
+      const pendingCartRaw =
+        localStorage.getItem("pendingOrderCart") ||
+        localStorage.getItem("cartItems") ||
+        "[]";
+      items = JSON.parse(pendingCartRaw || "[]");
+      if (!Array.isArray(items)) items = [];
+    } catch {
+      items = [];
+    }
+
+    try {
+      const addrRaw = localStorage.getItem("pendingOrderAddress") || "null";
+      address = JSON.parse(addrRaw);
+    } catch {
+      address = null;
+    }
+
+    if (!items.length) {
+      console.warn("handleCashfreeReturn: no pending items found, skipping confirm");
+      return;
+    }
+
+    const amount = items.reduce((sum, it) => {
+      const price = Number(it.price || 0);
+      const qty = Number(it.quantity || 1) || 1;
+      return sum + price * qty;
+    }, 0);
+
+    const res = await fetch(API_BASE + "/api/cashfree/confirm", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        cfOrderId: cfOrderId,
+        items,
+        amount,
+        address,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error("Cashfree confirm failed:", res.status, txt);
+      return;
+    }
+
+    const data = await res.json();
+    if (!data || !data.success || !data.order) {
+      console.error("Cashfree confirm response missing order:", data);
+      return;
+    }
+
+    // mark as confirmed so repeated refresh does not duplicate orders
+    localStorage.setItem("lastConfirmedCfOrderId", String(cfOrderId));
+
+    // clear local cart + pending data
+    localStorage.removeItem("pendingOrderCart");
+    localStorage.removeItem("pendingOrderAddress");
+    localStorage.removeItem("cartItems");
+    localStorage.removeItem("buyNowItem");
+
+    // Try to show success modal with order id
+    const orderIdSpan = document.getElementById("successOrderId");
+    if (orderIdSpan) {
+      orderIdSpan.textContent =
+        data.order._id ||
+        data.order.paymentId ||
+        data.order.razorpayOrderId ||
+        String(cfOrderId);
+    }
+
+    const modalEl = document.getElementById("orderSuccessModal");
+    if (modalEl && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    } else {
+      alert(
+        "Order placed successfully. Order ID: " +
+          (data.order._id || String(cfOrderId))
+      );
+    }
+  } catch (err) {
+    console.error("handleCashfreeReturn error:", err);
+  }
+}
+
 // NOTE: API_BASE & authHeaders ab global api.js se aayenge.
 // Yaha sirf helper rakhe hain jo saved address ko checkout form me pre-fill karega.
 
@@ -69,6 +169,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
   const checkoutMode = urlParams.get("mode"); // "buynow" | null
   const cfOrderParam = urlParams.get("cf_order_id") || urlParams.get("order_id");
+
+  // If returned from Cashfree payment, confirm on backend and show success
+  if (cfOrderParam) {
+    handleCashfreeReturn(cfOrderParam);
+  }
 
   let cart = [];
 

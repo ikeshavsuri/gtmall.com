@@ -54,52 +54,79 @@
 
   <script>
     // Featured products on Home page
-    document.addEventListener("DOMContentLoaded", async () => {
-      const container = document.getElementById("featuredProducts");
-      if (!container) return;
+document.addEventListener("DOMContentLoaded", async () => {
+  const container = document.getElementById("featuredProducts");
+  if (!container) return;
 
-      try {
-        // 1) Try to use already-fetched global PRODUCTS (from products.js)
-        let list = (typeof window !== "undefined" && Array.isArray(window.PRODUCTS) && window.PRODUCTS.length)
-          ? window.PRODUCTS
-          : [];
+  try {
+    // Try to reuse global PRODUCTS if already loaded
+    let list = (typeof window !== "undefined" &&
+                Array.isArray(window.PRODUCTS) &&
+                window.PRODUCTS.length)
+      ? window.PRODUCTS
+      : [];
 
-        // 2) If empty, fetch directly from backend
-        if (!list.length && typeof API_BASE !== "undefined") {
-          const res = await fetch(API_BASE + "/api/products");
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data)) list = data;
-          }
-        }
-
-        if (!list.length) {
-          // nothing to show, silently return
-          return;
-        }
-
-        const featured = list.slice(0, 4);
-        container.innerHTML = "";
-        featured.forEach((p) => {
-          const col = document.createElement("div");
-          col.className = "col-md-3";
-          col.innerHTML = `
-            <div class="card p-2 h-100">
-              <img src="${p.img}" alt="${p.name}">
-              <div class="card-body">
-                <h5>${p.name}</h5>
-                <p>₹${p.price}</p>
-                <button type="button" class="btn btn-sm btn-success" onclick='addToCart(${JSON.stringify(p)})'>
-                  Add to Cart
-                </button>
-              </div>
-            </div>`;
-          container.appendChild(col);
-        });
-      } catch (e) {
-        console.error("Failed to load featured products:", e);
+    // If still empty, fetch directly from backend
+    if (!list.length && typeof API_BASE !== "undefined") {
+      const res = await fetch(API_BASE + "/api/products");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) list = data;
       }
+    }
+
+    if (!list.length) {
+      // nothing to show
+      return;
+    }
+
+    const featured = list.slice(0, 4);
+    container.innerHTML = "";
+    featured.forEach((p) => {
+      const img =
+        p.image ||
+        (Array.isArray(p.images) && p.images[0]) ||
+        "assets/img/placeholder.png";
+      const name = p.name || p.title || "";
+      const price = p.price || 0;
+      const id = p._id || p.id || "";
+
+      // lightweight object for cart, so addToCart works with our cart.js normaliser
+      const cartPayload = {
+        id,
+        name,
+        price,
+        image: img,
+      };
+
+      const col = document.createElement("div");
+      col.className = "col-md-3";
+      col.innerHTML = `
+        <div class="card p-2 h-100">
+          <a href="product.html?id=${id}">
+            <img src="${img}" class="card-img-top" alt="${name}">
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">
+              <a href="product.html?id=${id}" class="text-decoration-none text-dark">
+                ${name}
+              </a>
+            </h5>
+            <p>₹${price}</p>
+            <button
+              type="button"
+              class="btn btn-sm btn-success"
+              onclick='addToCart(${JSON.stringify(cartPayload)})'>
+              Add to Cart
+            </button>
+          </div>
+        </div>`;
+      container.appendChild(col);
     });
+  } catch (e) {
+    console.error("Failed to load featured products:", e);
+  }
+});
   </script>
   <script src="assets/js/load-navbar.js"></script>
 </body>

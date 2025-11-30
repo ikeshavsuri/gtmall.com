@@ -451,6 +451,22 @@ app.post("/api/orders", userFromHeaders, async (req, res) => {
   }
 });
 
+
+// GET /api/orders/mine  -> list of orders for current user (used in my_orders.html)
+app.get("/api/orders/mine", userFromHeaders, async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !user.id) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
+    const orders = await Order.find({ userId: user.id }).sort({ createdAt: -1 });
+    return res.json(orders);
+  } catch (err) {
+    console.error("GET /api/orders/mine error:", err);
+    return res.status(500).json({ message: "Failed to load orders" });
+  }
+});
+
 // user ke khud ke orders
 app.get("/api/my-orders", userFromHeaders, async (req, res) => {
   try {

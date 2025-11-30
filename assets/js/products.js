@@ -64,6 +64,46 @@ function renderProductsGrid(products) {
     .join("");
 }
 
+
+/**
+ * Add a product (from listing) to local cart.
+ * We lookup by _id from the global PRODUCTS array and
+ * normalize fields to match cart.js -> addToCart(product)
+ */
+function addToCartFromListing(productId) {
+  try {
+    if (!Array.isArray(PRODUCTS) || !PRODUCTS.length) {
+      alert("Products not loaded yet. Please try again.");
+      return;
+    }
+    const p = PRODUCTS.find((item) => String(item._id) === String(productId));
+    if (!p) {
+      alert("Product not found.");
+      return;
+    }
+
+    const img =
+      p.image || (p.images && p.images[0]) || "assets/img/placeholder.png";
+
+    if (typeof addToCart !== "function") {
+      console.error("addToCart() is not available.");
+      alert("Cart is not ready. Please refresh the page.");
+      return;
+    }
+
+    addToCart({
+      id: p._id,
+      name: p.name || p.title || "",
+      price: p.price || 0,
+      img: img,
+    });
+  } catch (err) {
+    console.error("addToCartFromListing error:", err);
+    alert("Unable to add this product to cart right now.");
+  }
+}
+
+
 // Agar tumhare paas pehle se koi render function hai (shop.js me),
 // to upar wala use karne ki zaroorat nahi; bas fetchProducts se data le ke
 // usme pass kar dena.
