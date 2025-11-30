@@ -108,8 +108,6 @@ app.post("/api/addresses", userFromHeaders, async (req, res) => {
   }
 });
 
-  - CASHFREE_ENV ("sandbox" | "production", default "sandbox")
- */
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const CASHFREE_API_VERSION = process.env.CASHFREE_API_VERSION || "2022-09-01";
