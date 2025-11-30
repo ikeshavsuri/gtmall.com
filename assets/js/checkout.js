@@ -1,19 +1,64 @@
 // public/js/checkout.js
 
-// 🔹 BACKEND BASE URL (Render)
-const API_BASE = "https://gtmall-com.onrender.com"; // <- yahi tumhara Render backend hai
 
-// 🔹 Common auth headers – Firebase login se aaye values use karega
-function authHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "x-user-id": localStorage.getItem("userUid") || "",
-    "x-user-email": localStorage.getItem("userEmail") || "",
-    "x-user-name": localStorage.getItem("userName") || ""
-  };
+// NOTE: API_BASE & authHeaders ab global api.js se aayenge.
+// Yaha sirf helper rakhe hain jo saved address ko checkout form me pre-fill karega.
+
+async function prefillAddressFromSaved() {
+  // agar login nahi hai to skip
+  if (!localStorage.getItem("userUid")) return;
+
+  try {
+    const res = await fetch(API_BASE + "/api/addresses/mine", {
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) return;
+
+    const list = await res.json();
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    // Pehle default address, warna first
+    const addr = list.find(a => a.isDefault) || list[0];
+    if (!addr) return;
+
+    const byId = (id) => document.getElementById(id);
+    const setVal = (id, val) => {
+      const el = byId(id);
+      if (el && typeof val === "string") el.value = val;
+    };
+
+    setVal("addrName", addr.name || "");
+    setVal("addrMobile", addr.mobile || addr.phone || "");
+    setVal("addrAltMobile", addr.altMobile || "");
+    setVal("addrEmail", addr.email || addr.userEmail || "");
+    setVal("addrPincode", addr.pin || addr.pincode || "");
+    setVal("addrLocality", addr.locality || "");
+    setVal("addrAreaStreet", addr.areaStreet || addr.addressLine1 || "");
+    setVal("addrCity", addr.city || "");
+    setVal("addrState", addr.state || "");
+    setVal("addrLandmark", addr.landmark || "");
+
+    const type = (addr.type || "Home").toLowerCase();
+    const homeRadio = byId("addrTypeHome");
+    const workRadio = byId("addrTypeWork");
+    if (homeRadio && workRadio) {
+      if (type === "work") {
+        workRadio.checked = true;
+      } else {
+        homeRadio.checked = true;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to prefill address from saved:", e);
+  }
 }
 
+
 document.addEventListener("DOMContentLoaded", () => {
+  // Saved default address ko form me auto-fill karo
+  prefillAddressFromSaved();
+
   const itemsList   = document.getElementById("checkoutItemsList");
   const subtotalEl  = document.getElementById("checkoutSubtotal");
   const totalEl     = document.getElementById("checkoutTotal");

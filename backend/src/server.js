@@ -21,47 +21,94 @@ app.use(cors());
 app.use(express.json());
 // existing singular routes agar already hain to unko rehne do
 // === SINGULAR ===
-// app.get("/api/address", ...)
-// app.post("/api/address", ...)
+/// === NEW: PLURAL ROUTES (frontend ke liye) ===
 
-// === NEW: PLURAL ROUTES (frontend ke liye) ===
+// GET /api/addresses  -> saare addresses (current user)
 app.get("/api/addresses", userFromHeaders, async (req, res) => {
   try {
-    const addresses = await Address.find({ userId: req.user.id }).sort({
-      createdAt: -1,
+    const user = req.user;
+    if (!user || !user.id) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
+
+    const addresses = await Address.find({ userId: user.id }).sort({
+      isDefault: -1, // default address sabse upar
+      createdAt: 1,
     });
-    res.json(addresses);
+
+    return res.json(addresses);
   } catch (err) {
     console.error("GET /api/addresses error:", err);
-    res.status(500).json({ message: "Failed to load addresses" });
+    return res.status(500).json({ message: "Failed to load addresses" });
   }
 });
 
+// BACKWARD COMPAT: /api/addresses/mine (my_address.html me use ho raha hai)
+app.get("/api/addresses/mine", userFromHeaders, async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !user.id) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
+
+    const addresses = await Address.find({ userId: user.id }).sort({
+      isDefault: -1,
+      createdAt: 1,
+    });
+
+    return res.json(addresses);
+  } catch (err) {
+    console.error("GET /api/addresses/mine error:", err);
+    return res.status(500).json({ message: "Failed to load addresses" });
+  }
+});
+
+// POST /api/addresses  -> new / updated style body
+// FE se mostly { address: {..}, isDefault: true/false } aa raha hai
 app.post("/api/addresses", userFromHeaders, async (req, res) => {
   try {
     const user = req.user;
+    if (!user || !user.id) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
+
     const body = req.body || {};
+    const payload = body.address ? body.address : body; // dono format support
+
+    if (
+      !payload ||
+      !payload.name ||
+      !payload.mobile ||
+      !payload.pin
+    ) {
+      return res.status(400).json({ message: "Invalid address data" });
+    }
+
+    const isDefault = Boolean(body.isDefault);
+
+    // agar isDefault true hai -> pehle purane defaults hata do
+    if (isDefault) {
+      await Address.updateMany(
+        { userId: user.id },
+        { $set: { isDefault: false } }
+      );
+    }
 
     const addr = await Address.create({
       userId: user.id,
-      ...body,
+      userEmail: user.email || "",
+      ...payload,
+      isDefault,
     });
 
-    res.status(201).json(addr);
+    return res.status(201).json(addr);
   } catch (err) {
     console.error("POST /api/addresses error:", err);
-    res.status(500).json({ message: "Failed to add address" });
+    return res.status(500).json({ message: "Failed to add address" });
   }
 });
 
-
-/**
- * Cashfree Payment Gateway Setup (Standard Checkout)
- * Uses environment variables:
- *  - CASHFREE_APP_ID
- *  - CASHFREE_SECRET_KEY
- *  - CASHFREE_API_VERSION (optional, default "2022-09-01")
- *  - CASHFREE_ENV ("sandbox" | "production", default "sandbox")
+  - CASHFREE_ENV ("sandbox" | "production", default "sandbox")
  */
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;

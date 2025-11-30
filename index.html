@@ -47,33 +47,58 @@
     </div>
   </footer>
 
+  <script src="assets/js/api.js"></script>
   <script src="assets/js/cart.js"></script>
   <script src="assets/js/products.js"></script>
   <script src="assets/js/navbar.js"></script>
-  <script src="assets/js/api.js"></script>
 
   <script>
-    // Simple featured from PRODUCTS
-    document.addEventListener("DOMContentLoaded", () => {
+    // Featured products on Home page
+    document.addEventListener("DOMContentLoaded", async () => {
       const container = document.getElementById("featuredProducts");
-      if (!container || !window.PRODUCTS) return;
-      const featured = PRODUCTS.slice(0, 4);
-      featured.forEach(p => {
-        const col = document.createElement("div");
-        col.className = "col-md-3";
-        col.innerHTML = `
-          <div class="card p-2 h-100">
-            <img src="${p.img}" alt="${p.name}">
-            <div class="card-body">
-              <h5>${p.name}</h5>
-              <p>₹${p.price}</p>
-              <button onclick='addToCart(${JSON.stringify(p)})'>
-                Add to Cart
-              </button>
-            </div>
-          </div>`;
-        container.appendChild(col);
-      });
+      if (!container) return;
+
+      try {
+        // 1) Try to use already-fetched global PRODUCTS (from products.js)
+        let list = (typeof window !== "undefined" && Array.isArray(window.PRODUCTS) && window.PRODUCTS.length)
+          ? window.PRODUCTS
+          : [];
+
+        // 2) If empty, fetch directly from backend
+        if (!list.length && typeof API_BASE !== "undefined") {
+          const res = await fetch(API_BASE + "/api/products");
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) list = data;
+          }
+        }
+
+        if (!list.length) {
+          // nothing to show, silently return
+          return;
+        }
+
+        const featured = list.slice(0, 4);
+        container.innerHTML = "";
+        featured.forEach((p) => {
+          const col = document.createElement("div");
+          col.className = "col-md-3";
+          col.innerHTML = `
+            <div class="card p-2 h-100">
+              <img src="${p.img}" alt="${p.name}">
+              <div class="card-body">
+                <h5>${p.name}</h5>
+                <p>₹${p.price}</p>
+                <button type="button" class="btn btn-sm btn-success" onclick='addToCart(${JSON.stringify(p)})'>
+                  Add to Cart
+                </button>
+              </div>
+            </div>`;
+          container.appendChild(col);
+        });
+      } catch (e) {
+        console.error("Failed to load featured products:", e);
+      }
     });
   </script>
   <script src="assets/js/load-navbar.js"></script>

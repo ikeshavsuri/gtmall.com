@@ -28,13 +28,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       if (res.ok) {
         const items = await res.json();
-        saveCart(items);
+        // Server se agar valid & non-empty cart mile tabhi overwrite karo
+        if (Array.isArray(items) && items.length > 0) {
+          saveCart(items);
+        }
       }
     } catch (e) {
       console.error("Failed to load cart from server:", e);
     }
   }
 
+  // Is point par localStorage ka latest cart use hoga
   renderCartPage();
   updateCartBadge();
 });
