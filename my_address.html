@@ -199,164 +199,294 @@
   <script src="assets/js/load-navbar.js"></script>
 
   <script>
-async function loadAddresses() {
-      const savedSection = document.getElementById("savedAddressesSection");
-      const listDiv      = document.getElementById("addressesList");
-      const formSection  = document.getElementById("addressFormSection");
+let CURRENT_ADDRESSES = [];
+let EDITING_ADDRESS_ID = null;
 
-      // default state
-      savedSection.style.display = "none";
-      formSection.style.display  = "none";
-      listDiv.innerHTML = "";
+// Helper: open form, optionally prefill with existing address
+function showAddressForm(address) {
+  const formSection = document.getElementById("addressFormSection");
+  const savedSection = document.getElementById("savedAddressesSection");
+  const form = document.getElementById("addressForm");
 
-      try {
-        const res = await fetch(API_BASE + "/api/addresses/mine", {
-          headers: authHeaders()
-        });
+  if (savedSection) savedSection.style.display = "none";
+  if (formSection) formSection.style.display = "block";
 
-        if (res.status === 401) {
-          listDiv.innerHTML =
-            '<div class="col-12"><p class="text-muted">Please login to manage addresses.</p></div>';
-          savedSection.style.display = "block";
-          return;
-        }
+  form?.reset();
+  const defaultCheckbox = document.getElementById("addrIsDefault");
+  if (defaultCheckbox) defaultCheckbox.checked = false;
+  EDITING_ADDRESS_ID = null;
 
-        if (!res.ok) {
-          listDiv.innerHTML =
-            '<div class="col-12"><p class="text-danger">Server error while loading addresses.</p></div>';
-          savedSection.style.display = "block";
-          return;
-        }
+  if (address) {
+    EDITING_ADDRESS_ID = address._id || address.id || null;
 
-        const addresses = await res.json();
+    document.getElementById("addrName").value =
+      address.name || "";
+    document.getElementById("addrMobile").value =
+      address.mobile || address.phone || "";
+    document.getElementById("addrAltMobile").value =
+      address.altMobile || "";
+    document.getElementById("addrEmail").value =
+      address.email || address.userEmail || "";
+    document.getElementById("addrPincode").value =
+      address.pin || address.pincode || "";
+    document.getElementById("addrLocality").value =
+      address.locality || "";
+    document.getElementById("addrAreaStreet").value =
+      address.areaStreet || address.addressLine1 || "";
+    document.getElementById("addrCity").value =
+      address.city || "";
+    document.getElementById("addrState").value =
+      address.state || "";
+    document.getElementById("addrLandmark").value =
+      address.landmark || "";
 
-        if (!Array.isArray(addresses) || addresses.length === 0) {
-          // koi address nahi -> sirf form dikhao
-          formSection.style.display = "block";
-          return;
-        }
-
-        addresses.forEach((a) => {
-          const full = `
-            ${a.name}<br>
-            ${a.areaStreet}, ${a.locality}<br>
-            ${a.city}, ${a.state} - ${a.pin}<br>
-            Mobile: ${a.mobile}${a.altMobile ? " / " + a.altMobile : ""}<br>
-            Type: ${a.type || "Home"}${a.isDefault ? " (Default)" : ""}
-          `;
-          const col = document.createElement("div");
-          col.className = "col-md-6";
-          col.innerHTML = `
-            <div class="card h-100">
-              <div class="card-body">
-                <h6 class="card-title mb-2">${a.isDefault ? "Default Address" : "Address"}</h6>
-                <p class="card-text small mb-0">${full}</p>
-              </div>
-            </div>
-          `;
-          listDiv.appendChild(col);
-        });
-
-        savedSection.style.display = "block";
-      } catch (err) {
-        console.error(err);
-        listDiv.innerHTML =
-          '<div class="col-12"><p class="text-danger">Failed to load addresses. Please try again.</p></div>';
-        savedSection.style.display = "block";
-      }
+    const type = (address.type || "Home").toLowerCase();
+    const homeRadio = document.querySelector("input[name='addrType'][value='Home']");
+    const workRadio = document.querySelector("input[name='addrType'][value='Work']");
+    if (type === "work" && workRadio) {
+      workRadio.checked = true;
+    } else if (homeRadio) {
+      homeRadio.checked = true;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const yearSpan = document.getElementById("yearSpan");
-      if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+    if (address.isDefault && defaultCheckbox) {
+      defaultCheckbox.checked = true;
+    }
+  }
+}
 
-      loadAddresses();
+async function loadAddresses() {
+  const savedSection = document.getElementById("savedAddressesSection");
+  const listDiv      = document.getElementById("addressesList");
+  const formSection  = document.getElementById("addressFormSection");
 
-      const formSection   = document.getElementById("addressFormSection");
-      const form          = document.getElementById("addressForm");
-      const btnShowForm   = document.getElementById("btnShowAddressForm");
-      const btnCancelForm = document.getElementById("btnCancelForm");
+  if (!savedSection || !listDiv || !formSection) return;
 
-      if (btnShowForm) {
-        btnShowForm.addEventListener("click", () => {
-          form.reset();
-          document.getElementById("addrIsDefault").checked = true;
-          formSection.style.display = "block";
-          window.scrollTo({ top: formSection.offsetTop - 80, behavior: "smooth" });
-        });
-      }
+  savedSection.style.display = "none";
+  formSection.style.display  = "none";
+  listDiv.innerHTML = "";
 
-      if (btnCancelForm) {
-        btnCancelForm.addEventListener("click", () => {
-          formSection.style.display = "none";
-        });
-      }
+  try {
+    const res = await fetch(API_BASE + "/api/addresses/mine", {
+      headers: authHeaders()
+    });
 
-      if (form) {
-        form.addEventListener("submit", async (e) => {
-          e.preventDefault();
+    if (res.status === 401) {
+      listDiv.innerHTML =
+        '<div class="col-12"><p class="text-muted">Please login to manage addresses.</p></div>';
+      savedSection.style.display = "block";
+      return;
+    }
 
-          const name      = document.getElementById("addrName").value.trim();
-          const mobile    = document.getElementById("addrMobile").value.trim();
-          const altMobile = document.getElementById("addrAltMobile").value.trim();
-          const email     = document.getElementById("addrEmail").value.trim();
-          const pin       = document.getElementById("addrPincode").value.trim();
-          const locality  = document.getElementById("addrLocality").value.trim();
-          const area      = document.getElementById("addrAreaStreet").value.trim();
-          const city      = document.getElementById("addrCity").value.trim();
-          const state     = document.getElementById("addrState").value.trim();
-          const landmark  = document.getElementById("addrLandmark").value.trim();
-          const type      = document.querySelector("input[name='addrType']:checked")?.value || "Home";
-          const isDefault = document.getElementById("addrIsDefault").checked;
+    if (!res.ok) {
+      listDiv.innerHTML =
+        '<div class="col-12"><p class="text-danger">Server error while loading addresses.</p></div>';
+      savedSection.style.display = "block";
+      return;
+    }
 
-          if (!name || !mobile || mobile.length !== 10 || !pin || !locality || !area || !city || !state || !email) {
-            alert("Please fill all required fields correctly.");
+    const addresses = await res.json();
+    CURRENT_ADDRESSES = Array.isArray(addresses) ? addresses : [];
+
+    if (!CURRENT_ADDRESSES.length) {
+      formSection.style.display = "block";
+      return;
+    }
+
+    CURRENT_ADDRESSES.forEach((a) => {
+      const full = `
+        ${a.name || ""}<br>
+        ${(a.areaStreet || "")}${a.locality ? ", " + a.locality : ""}<br>
+        ${(a.city || "")}${a.state ? ", " + a.state : ""}${
+        a.pin ? " - " + a.pin : ""
+      }<br>
+        Mobile: ${a.mobile || ""}${
+        a.altMobile ? " / " + a.altMobile : ""
+      }<br>
+        Type: ${a.type || "Home"}${a.isDefault ? " (Default)" : ""}
+      `;
+
+      const col = document.createElement("div");
+      col.className = "col-md-6";
+      col.innerHTML = `
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h6 class="card-title mb-0">${
+                a.isDefault ? "Default Address" : "Address"
+              }</h6>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-link text-primary p-0 me-2 edit-address" data-id="${
+                  a._id
+                }">Edit</button>
+                <button class="btn btn-link text-danger p-0 delete-address" data-id="${
+                  a._id
+                }">Delete</button>
+              </div>
+            </div>
+            <p class="card-text small mb-0">${full}</p>
+          </div>
+        </div>
+      `;
+      listDiv.appendChild(col);
+    });
+
+    // Edit handlers
+    listDiv.querySelectorAll(".edit-address").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const id = btn.getAttribute("data-id");
+        const addr = CURRENT_ADDRESSES.find(
+          (a) => String(a._id) === String(id)
+        );
+        if (addr) {
+          showAddressForm(addr);
+        }
+      });
+    });
+
+    // Delete handlers
+    listDiv.querySelectorAll(".delete-address").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const id = btn.getAttribute("data-id");
+        if (!id) return;
+        if (!confirm("Delete this address?")) return;
+
+        try {
+          const res = await fetch(API_BASE + "/api/addresses/" + id, {
+            method: "DELETE",
+            headers: authHeaders(),
+          });
+          if (!res.ok) {
+            const txt = await res.text();
+            alert("Failed to delete address: " + txt);
             return;
           }
+          loadAddresses();
+        } catch (err) {
+          console.error(err);
+          alert("Something went wrong while deleting address.");
+        }
+      });
+    });
 
-          const address = {
-            name,
-            mobile,
-            altMobile,
-            email,
-            pin,
-            locality,
-            areaStreet: area,
-            city,
-            state,
-            landmark,
-            type
-          };
+    savedSection.style.display = "block";
+  } catch (err) {
+    console.error(err);
+    listDiv.innerHTML =
+      '<div class="col-12"><p class="text-danger">Failed to load addresses. Please try again.</p></div>';
+    savedSection.style.display = "block";
+  }
+}
 
-          try {
-            const res = await fetch(API_BASE + "/api/addresses", {
-              method: "POST",
-              headers: authHeaders(),
-              body: JSON.stringify({ address, isDefault })
-            });
+document.addEventListener("DOMContentLoaded", () => {
+  const btnAddNew     = document.getElementById("btnAddNewAddress");
+  const btnCancelForm = document.getElementById("btnCancelAddressForm");
+  const formSection   = document.getElementById("addressFormSection");
+  const savedSection  = document.getElementById("savedAddressesSection");
+  const form          = document.getElementById("addressForm");
 
-            if (res.status === 401) {
-              alert("Please login again to save address.");
-              window.location.href = "login.html";
-              return;
-            }
+  loadAddresses();
 
-            if (!res.ok) {
-              const txt = await res.text();
-              alert("Server error (" + res.status + "): " + txt);
-              return;
-            }
+  if (btnAddNew) {
+    btnAddNew.addEventListener("click", () => {
+      showAddressForm(null);
+    });
+  }
 
-            alert("Address saved successfully.");
-            formSection.style.display = "none";
-            loadAddresses();
-          } catch (err) {
-            console.error(err);
-            alert("Something went wrong. Please try again.");
-          }
+  if (btnCancelForm) {
+    btnCancelForm.addEventListener("click", () => {
+      formSection.style.display = "none";
+      if (savedSection && CURRENT_ADDRESSES.length) {
+        savedSection.style.display = "block";
+      }
+      EDITING_ADDRESS_ID = null;
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name      = document.getElementById("addrName").value.trim();
+      const mobile    = document.getElementById("addrMobile").value.trim();
+      const altMobile = document.getElementById("addrAltMobile").value.trim();
+      const email     = document.getElementById("addrEmail").value.trim();
+      const pin       = document.getElementById("addrPincode").value.trim();
+      const locality  = document.getElementById("addrLocality").value.trim();
+      const area      = document.getElementById("addrAreaStreet").value.trim();
+      const city      = document.getElementById("addrCity").value.trim();
+      const state     = document.getElementById("addrState").value.trim();
+      const landmark  = document.getElementById("addrLandmark").value.trim();
+      const type      =
+        document.querySelector("input[name='addrType']:checked")?.value ||
+        "Home";
+      const isDefault = document.getElementById("addrIsDefault").checked;
+
+      if (
+        !name ||
+        !mobile ||
+        mobile.length !== 10 ||
+        !pin ||
+        !locality ||
+        !area ||
+        !city ||
+        !state ||
+        !email
+      ) {
+        alert("Please fill all required fields correctly.");
+        return;
+      }
+
+      const address = {
+        name,
+        mobile,
+        altMobile,
+        email,
+        pin,
+        locality,
+        areaStreet: area,
+        city,
+        state,
+        landmark,
+        type,
+      };
+
+      if (EDITING_ADDRESS_ID) {
+        address._id = EDITING_ADDRESS_ID;
+      }
+
+      try {
+        const res = await fetch(API_BASE + "/api/addresses", {
+          method: "POST",
+          headers: {
+            ...authHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            address,
+            isDefault,
+          }),
         });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          alert("Server error (" + res.status + "): " + txt);
+          return;
+        }
+
+        alert("Address saved successfully.");
+        formSection.style.display = "none";
+        EDITING_ADDRESS_ID = null;
+        loadAddresses();
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong. Please try again.");
       }
     });
-  </script>
+  }
+});
+</script>
 </body>
 </html>

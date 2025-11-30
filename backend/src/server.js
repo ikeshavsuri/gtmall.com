@@ -75,12 +75,7 @@ app.post("/api/addresses", userFromHeaders, async (req, res) => {
     const body = req.body || {};
     const payload = body.address ? body.address : body; // dono format support
 
-    if (
-      !payload ||
-      !payload.name ||
-      !payload.mobile ||
-      !payload.pin
-    ) {
+    if (!payload || !payload.name || !payload.mobile || !payload.pin) {
       return res.status(400).json({ message: "Invalid address data" });
     }
 
@@ -94,6 +89,30 @@ app.post("/api/addresses", userFromHeaders, async (req, res) => {
       );
     }
 
+    // UPDATE vs CREATE
+    const id = payload._id || payload.id;
+    if (id) {
+      delete payload._id;
+      delete payload.id;
+
+      const updated = await Address.findOneAndUpdate(
+        { _id: id, userId: user.id },
+        {
+          ...payload,
+          isDefault,
+          userEmail: user.email || "",
+        },
+        { new: true }
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+
+      return res.json(updated);
+    }
+
+    // CREATE new address
     const addr = await Address.create({
       userId: user.id,
       userEmail: user.email || "",
@@ -107,6 +126,36 @@ app.post("/api/addresses", userFromHeaders, async (req, res) => {
     return res.status(500).json({ message: "Failed to add address" });
   }
 });
+
+// DELETE /api/addresses/:id -> remove a saved address
+app.delete("/api/addresses/:id", userFromHeaders, async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !user.id) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
+
+    const addrId = req.params.id;
+    if (!addrId) {
+      return res.status(400).json({ message: "Address id is required" });
+    }
+
+    const deleted = await Address.findOneAndDelete({
+      _id: addrId,
+      userId: user.id,
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /api/addresses/:id error:", err);
+    return res.status(500).json({ message: "Failed to delete address" });
+  }
+});
+
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
@@ -379,21 +428,31 @@ app.get("/api/cart/mine", userFromHeaders, async (req, res) => {
 });
 
 
-// ---------------------------
-//  ADDRESS APIs
-// ---------------------------
+// ---------------------
+// ADDRESS APIs
+// ---------------------
 app.post("/api/address", userFromHeaders, async (req, res) => {
   try {
+    const body = req.body || {};
+
+    // basic validation
+    if (!body.name || !body.mobile || !body.pin) {
+      return res.status(400).json({ message: "Invalid address data" });
+    }
+
+    // create address
     const address = await Address.create({
-      userId: req.user.id,
-      ...req.body,
+      userId: req.user.id,   // make sure userFromHeaders sets req.user
+      ...body,
     });
-    return res.json(address);
+
+    return res.status(201).json(address);
   } catch (err) {
     console.error("POST /api/address error:", err);
     return res.status(500).json({ message: "Failed to add address" });
   }
 });
+
 
 app.get("/api/address", userFromHeaders, async (req, res) => {
   try {
