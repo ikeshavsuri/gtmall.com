@@ -1,6 +1,6 @@
-const express = require("express");
-const crypto = require("crypto");
-const Razorpay = require("razorpay");
+import express from "express";
+import crypto from "crypto";
+import Razorpay from "razorpay";
 
 const router = express.Router();
 
@@ -41,6 +41,10 @@ router.post("/verify-payment", (req, res) => {
       razorpay_signature,
     } = req.body;
 
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ status: "invalid data" });
+    }
+
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
     const expectedSignature = crypto
@@ -60,4 +64,3 @@ router.post("/verify-payment", (req, res) => {
 });
 
 export default router;
-
