@@ -1,15 +1,19 @@
 // ================= CONFIG =================
 
-// 🔁 Backend URL (Render wala URL yahan daalo)
-const BACKEND_URL = API_BASE; 
-// API_BASE already api.js se aa raha hai
+const BACKEND_URL = API_BASE;
 
-// 🔑 Razorpay KEY ID (sirf KEY ID, secret nahi)
-const RAZORPAY_KEY_ID = "rzp_live_S6wB5LeTtqAAik"; 
-// 👆 apni LIVE key id yahan daalo
+// 🔑 Razorpay KEY ID (sirf KEY ID)
+const RAZORPAY_KEY_ID = "rzp_live_S6wB5LeTtqAAik";
 
+// ================= GLOBAL =================
+let selectedAddress = null;
 
 // ================= HELPERS =================
+
+function authHeaders() {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: "Bearer " + token } : {};
+}
 
 function getCartItems() {
   try {
@@ -24,75 +28,106 @@ function clearCart() {
   localStorage.removeItem("buyNowItem");
 }
 
+// ================= ADDRESS =================
+
+async function loadAddresses() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/addresses`, {
+      headers: authHeaders(),
+    });
+    const addresses = await res.json();
+
+    if (!Array.isArray(addresses) || !addresses.length) return;
+
+    renderAddresses(addresses);
+  } catch (err) {
+    console.error("Load address error:", err);
+  }
+}
+
+function renderAddresses(addresses) {
+  const container = document.getElementById("addressList");
+  if (!container) return;
+
+  container.innerHTML = "";
+  selectedAddress = null;
+
+  addresses.forEach((addr) => {
+    const div = document.createElement("div");
+    div.className = "border rounded p-2 mb-2";
+
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "selectedAddress";
+    radio.className = "form-check-input me-2";
+
+    if (addr.isDefault && !selectedAddress) {
+      radio.checked = true;
+      selectedAddress = addr;
+    }
+
+    radio.addEventListener("change", () => {
+      selectedAddress = addr;
+    });
+
+    div.appendChild(radio);
+    div.appendChild(
+      document.createTextNode(
+        `${addr.name}, ${addr.mobile}, ${addr.areaStreet}, ${addr.city}, ${addr.state} - ${addr.pin}`
+      )
+    );
+
+    container.appendChild(div);
+  });
+
+  // fallback: first address select
+  if (!selectedAddress && addresses.length) {
+    selectedAddress = addresses[0];
+    const firstRadio = container.querySelector("input[type=radio]");
+    if (firstRadio) firstRadio.checked = true;
+  }
+}
+
 // ================= MAIN =================
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  const itemsList  = document.getElementById("checkoutItemsList");
-  const subtotalEl = document.getElementById("checkoutSubtotal");
-  const totalEl    = document.getElementById("checkoutTotal");
-  const payNowBtn  = document.getElementById("btnPayNow");
+  loadAddresses(); // ⭐ AUTO LOAD ADDRESS
 
-  let cart = getCartItems();
+  const itemsList = document.getElementById("checkoutItemsList");
+  const subtotalEl = document.getElementById("checkoutSubtotal");
+  const totalEl = document.getElementById("checkoutTotal");
+  const payNowBtn = document.getElementById("btnPayNow");
+
+  const cart = getCartItems();
   let subtotal = 0;
 
-  // ---------- EMPTY CART ----------
   if (!cart.length) {
     itemsList.innerHTML = `<li class="list-group-item">Your cart is empty.</li>`;
-    subtotalEl.textContent = "₹0";
-    totalEl.textContent = "₹0";
     payNowBtn.disabled = true;
     return;
   }
 
-  // ---------- RENDER CART ----------
-  itemsList.innerHTML = "";
-  cart.forEach(item => {
+  cart.forEach((item) => {
     const qty = Number(item.quantity || 1);
     const price = Number(item.price || 0);
-    const lineTotal = price * qty;
-    subtotal += lineTotal;
+    subtotal += price * qty;
 
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between";
-    li.innerHTML = `
-      <div>${item.name}</div>
-      <strong>₹${lineTotal.toFixed(2)}</strong>
-    `;
+    li.innerHTML = `<div>${item.name}</div><strong>₹${(price * qty).toFixed(2)}</strong>`;
     itemsList.appendChild(li);
   });
 
   subtotalEl.textContent = "₹" + subtotal.toFixed(2);
   totalEl.textContent = "₹" + subtotal.toFixed(2);
 
-  // ================= PAY NOW =================
+  // ================= PAY =================
 
   payNowBtn.addEventListener("click", async () => {
 
-    // ---------- ADDRESS ----------
-    const address = {
-      name: document.getElementById("addrName")?.value.trim(),
-      mobile: document.getElementById("addrMobile")?.value.trim(),
-      email: document.getElementById("addrEmail")?.value.trim(),
-      pincode: document.getElementById("addrPincode")?.value.trim(),
-      locality: document.getElementById("addrLocality")?.value.trim(),
-      areaStreet: document.getElementById("addrAreaStreet")?.value.trim(),
-      city: document.getElementById("addrCity")?.value.trim(),
-      state: document.getElementById("addrState")?.value.trim(),
-    };
-
-    if (
-      !address.name ||
-      !address.mobile ||
-      address.mobile.length !== 10 ||
-      !address.email ||
-      !address.pincode ||
-      !address.locality ||
-      !address.areaStreet ||
-      !address.city ||
-      !address.state
-    ) {
-      alert("Please fill all required address fields correctly.");
+    if (!selectedAddress) {
+      alert("Please select delivery address");
       return;
     }
 
@@ -100,36 +135,28 @@ document.addEventListener("DOMContentLoaded", () => {
       payNowBtn.disabled = true;
       payNowBtn.textContent = "Processing...";
 
-      // ---------- 1️⃣ CREATE ORDER (BACKEND) ----------
-      const orderRes = await fetch(
-        `${BACKEND_URL}/api/payment/create-order`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeaders(),
-          },
-          body: JSON.stringify({ amount: subtotal }),
-        }
-      );
+      // 1️⃣ CREATE ORDER
+      const orderRes = await fetch(`${BACKEND_URL}/api/payment/create-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(),
+        },
+        body: JSON.stringify({ amount: subtotal }),
+      });
 
       const order = await orderRes.json();
-      if (!order.id) {
-        throw new Error("Order creation failed");
-      }
+      if (!order.id) throw new Error("Order creation failed");
 
-      // ---------- 2️⃣ RAZORPAY OPTIONS ----------
+      // 2️⃣ RAZORPAY
       const options = {
         key: RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: "INR",
         name: "GT Mall",
-        description: "Order Payment",
         order_id: order.id,
 
         handler: async function (response) {
-
-          // ---------- 3️⃣ VERIFY PAYMENT ----------
           const verifyRes = await fetch(
             `${BACKEND_URL}/api/payment/verify-payment`,
             {
@@ -143,45 +170,25 @@ document.addEventListener("DOMContentLoaded", () => {
           );
 
           const result = await verifyRes.json();
-
           if (result.status === "success") {
             clearCart();
-
-            const modalEl = document.getElementById("orderSuccessModal");
-            if (modalEl && bootstrap?.Modal) {
-              document.getElementById("successOrderId").textContent =
-                response.razorpay_order_id;
-              new bootstrap.Modal(modalEl).show();
-            } else {
-              alert("Payment successful 🎉");
-            }
+            alert("Payment successful 🎉");
+            window.location.href = "my_orders.html";
           } else {
-            alert("Payment verification failed ❌");
+            alert("Payment verification failed");
           }
         },
 
-        theme: {
-          color: "#198754",
-        },
+        theme: { color: "#198754" },
       };
 
-      // ---------- 4️⃣ OPEN RAZORPAY ----------
-      const rzp = new Razorpay(options);
-      rzp.open();
+      new Razorpay(options).open();
 
     } catch (err) {
       console.error(err);
-      alert("Unable to start payment. Please try again.");
+      alert("Payment failed");
       payNowBtn.disabled = false;
       payNowBtn.textContent = "Proceed to Payment";
     }
   });
-
-  // ---------- TRACK ORDER ----------
-  const trackBtn = document.getElementById("btnTrackOrder");
-  if (trackBtn) {
-    trackBtn.addEventListener("click", () => {
-      window.location.href = "my_orders.html";
-    });
-  }
 });
