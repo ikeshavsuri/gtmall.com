@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const Razorpay = require("razorpay");
 
 dotenv.config();
 const app = express();
@@ -9,21 +10,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ===== DB CONNECT =====
+// =======================
+// DATABASE CONNECT
+// =======================
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log("Mongo Error:", err));
 
-// ===== MODELS =====
+// =======================
+// MODELS
+// =======================
 const Product = require("./models/product");
 const Order = require("./models/Order");
 const User = require("./models/User");
 
 // =======================
-// PRODUCTS ROUTES
+// PRODUCTS (SELLER + INDEX)
 // =======================
 
-// Add product (SELLER)
+// ADD PRODUCT
 app.post("/api/products", async (req, res) => {
   try {
     const product = new Product(req.body);
@@ -34,7 +39,7 @@ app.post("/api/products", async (req, res) => {
   }
 });
 
-// Get all products
+// GET ALL PRODUCTS
 app.get("/api/products", async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -44,7 +49,7 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// Featured products (INDEX PAGE)
+// FEATURED PRODUCTS
 app.get("/api/products/featured", async (req, res) => {
   try {
     const products = await Product.find({ featured: true }).limit(8);
@@ -58,7 +63,7 @@ app.get("/api/products/featured", async (req, res) => {
 // ORDERS
 // =======================
 
-// Create order
+// CREATE ORDER
 app.post("/api/orders", async (req, res) => {
   try {
     const order = new Order(req.body);
@@ -69,7 +74,7 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-// Get user orders
+// GET USER ORDERS
 app.get("/api/orders/:userId", async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.params.userId });
@@ -80,7 +85,31 @@ app.get("/api/orders/:userId", async (req, res) => {
 });
 
 // =======================
+// RAZORPAY (ISOLATED)
+// =======================
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || "",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || ""
+});
+
+app.post("/api/razorpay/order", async (req, res) => {
+  try {
+    const options = {
+      amount: req.body.amount * 100,
+      currency: "INR",
+      receipt: "order_rcptid_" + Date.now()
+    };
+    const order = await razorpay.orders.create(options);
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// =======================
 // SERVER START
 // =======================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
