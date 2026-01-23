@@ -22,7 +22,7 @@
   <meta property="og:url" content="https://gtmall.run.place/" />
   <meta property="og:image" content="https://gtmall.run.place/assets/img/logo.png" />
 
-  <!-- STRUCTURED DATA -->
+  
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -44,7 +44,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
   <link href="assets/css/style.css" rel="stylesheet">
 
-  <!-- JS -->
+  <!-- JS (DEFER) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 </head>
 
@@ -85,7 +85,7 @@
     </div>
   </footer>
 
-  <!-- CORE SCRIPTS -->
+  <!-- SCRIPTS -->
   <script src="assets/js/api.js"></script>
   <script src="assets/js/cart.js"></script>
   <script src="assets/js/products.js"></script>
@@ -94,50 +94,45 @@
 
   <!-- FEATURED PRODUCTS LOGIC -->
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const container = document.getElementById("featuredProducts");
-      if (!container) return;
+  document.addEventListener("DOMContentLoaded", async () => {
+    const container = document.getElementById("featuredProducts");
+    if (!container) return;
 
-      try {
-        let list = Array.isArray(window.PRODUCTS) ? window.PRODUCTS : [];
+    try {
+      let list = Array.isArray(window.PRODUCTS) ? window.PRODUCTS : [];
 
-        if (!list.length && typeof API_BASE !== "undefined") {
-          const res = await fetch(API_BASE + "/api/products");
-          if (res.ok) list = await res.json();
-        }
-
-        if (!list.length) return;
-
-        container.innerHTML = "";
-        list.slice(0, 4).forEach(p => {
-          const img = p.image || (p.images && p.images[0]) || "assets/img/placeholder.png";
-          const col = document.createElement("div");
-          col.className = "col-md-3";
-          col.innerHTML = `
-            <div class="card p-2 h-100">
-              <a href="product.html?id=${p._id}">
-                <img src="${img}" class="card-img-top" alt="${p.name}">
-              </a>
-              <div class="card-body">
-                <h5 class="card-title">${p.name}</h5>
-                <p>₹${p.price}</p>
-                <button class="btn btn-sm btn-success"
-                  onclick='addToCart(${JSON.stringify({
-                    id: p._id,
-                    name: p.name,
-                    price: p.price,
-                    image: img
-                  })})'>
-                  Add to Cart
-                </button>
-              </div>
-            </div>`;
-          container.appendChild(col);
-        });
-      } catch (e) {
-        console.error("Featured products error:", e);
+      if (!list.length && typeof API_BASE !== "undefined") {
+        const res = await fetch(API_BASE + "/api/products");
+        if (res.ok) list = await res.json();
       }
-    });
+
+      if (!list.length) return;
+
+      container.innerHTML = "";
+      list.slice(0, 4).forEach(p => {
+        const img = p.image || (p.images && p.images[0]) || "assets/img/placeholder.png";
+        const col = document.createElement("div");
+        col.className = "col-md-3";
+        col.innerHTML = `
+          <div class="card p-2 h-100">
+            <a href="product.html?id=${p._id}">
+              <img src="${img}" class="card-img-top" alt="${p.name}">
+            </a>
+            <div class="card-body">
+              <h5 class="card-title">${p.name}</h5>
+              <p>₹${p.price}</p>
+              <button class="btn btn-sm btn-success"
+                onclick='addToCart(${JSON.stringify({id:p._id,name:p.name,price:p.price,image:img})})'>
+                Add to Cart
+              </button>
+            </div>
+          </div>`;
+        container.appendChild(col);
+      });
+    } catch (e) {
+      console.error("Featured products error:", e);
+    }
+  });
   </script>
 
 </body>
