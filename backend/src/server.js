@@ -13,13 +13,24 @@ import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
 
 dotenv.config();
 
-// DB connect
+// --------------------
+// RAZORPAY INSTANCE (🔥 MOST IMPORTANT FIX)
+// --------------------
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// --------------------
+// DB CONNECT
+// --------------------
 connectDB();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
 // existing singular routes agar already hain to unko rehne do
 // === SINGULAR ===
 /// === NEW: PLURAL ROUTES (frontend ke liye) ===
