@@ -12,6 +12,8 @@
     "express": "^4.18.2",
     "mongoose": "^8.0.0",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.12",
+    "pdfkit": "^0.17.2",
     "razorpay": "^2.9.6"
   }
 }
