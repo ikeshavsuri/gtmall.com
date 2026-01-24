@@ -446,6 +446,37 @@ app.get("/api/my-orders", userFromHeaders, async (req, res) => {
     return res.status(500).json({ message: "Failed to load orders" });
   }
 });
+// USER: request refund
+app.post("/api/orders/:id/request-refund", userFromHeaders, async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.paymentStatus !== "paid") {
+      return res.status(400).json({ message: "Order not paid" });
+    }
+
+    if (order.refundStatus === "requested") {
+      return res.status(400).json({ message: "Refund already requested" });
+    }
+
+    order.refundStatus = "requested";
+    order.returnRequested = true;
+    await order.save();
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("request refund error:", err);
+    return res.status(500).json({ message: "Failed to request refund" });
+  }
+});
+
 
 // ---------------------------
 //  ADMIN: ORDERS DASHBOARD
@@ -461,6 +492,56 @@ app.get(
     } catch (err) {
       console.error("GET /api/admin/orders error:", err);
       return res.status(500).json({ message: "Failed to load admin orders" });
+    }
+  }
+);
+// ADMIN: approve refund
+app.post(
+  "/api/admin/orders/:id/refund",
+  userFromHeaders,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const order = await Order.findById(req.params.id);
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.paymentStatus !== "paid") {
+        return res.status(400).json({ message: "Order not paid" });
+      }
+
+      if (order.refundStatus === "processed") {
+        return res
+          .status(400)
+          .json({ message: "Refund already processed" });
+      }
+
+      if (!order.paymentId) {
+        return res
+          .status(400)
+          .json({ message: "Missing Razorpay paymentId" });
+      }
+
+      const refund = await razorpay.payments.refund(order.paymentId, {
+        amount: Math.round(order.amount * 100),
+      });
+
+      order.paymentStatus = "refunded";
+      order.refundStatus = "processed";
+      order.refundId = refund.id;
+      order.status = "Cancelled";
+
+      await order.save();
+
+      return res.json({
+        success: true,
+        refundId: refund.id,
+      });
+    } catch (err) {
+      console.error("admin refund error:", err);
+      return res.status(500).json({ message: "Refund failed" });
     }
   }
 );

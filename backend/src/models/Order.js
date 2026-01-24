@@ -10,33 +10,64 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema(
   {
+    // User
     userId: { type: String, default: "guest" },
     userEmail: { type: String, default: "" },
 
+    // Items
     items: [orderItemSchema],
 
+    // Amount
     amount: { type: Number, required: true },
 
-    // Payment
+    // -----------------
+    // PAYMENT DETAILS
+    // -----------------
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
-    paymentId: { type: String, index: true }, // Razorpay payment id
-    razorpayOrderId: String,
 
-    // Return / Refund
-    returnRequested: { type: Boolean, default: false },
+    paymentId: {
+      type: String,
+      index: true, // Razorpay payment_id (duplicate protection)
+    },
+
+    razorpayOrderId: {
+      type: String,
+      index: true, // Razorpay order_id
+    },
+
+    // -----------------
+    // RETURN / REFUND
+    // -----------------
+    returnRequested: {
+      type: Boolean,
+      default: false,
+    },
+
     refundStatus: {
       type: String,
       enum: ["none", "requested", "processed"],
       default: "none",
     },
-    refundId: String,
 
-    address: Object,
+    refundId: {
+      type: String, // Razorpay refund_id
+    },
 
+    // -----------------
+    // ADDRESS
+    // -----------------
+    address: {
+      type: Object,
+      required: true,
+    },
+
+    // -----------------
+    // ORDER STATUS
+    // -----------------
     status: {
       type: String,
       enum: ["Processing", "Shipped", "Delivered", "Cancelled"],

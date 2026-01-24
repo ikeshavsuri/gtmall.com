@@ -1,328 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>My Orders | GT Mall</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css" />
 
   <style>
     .order-card .order-details {
       border-top: 1px dashed #e0e0e0;
       padding-top: 0.75rem;
     }
-    .order-timeline .steps-wrapper {
-      position: relative;
-      width: 100%;
-    }
-    .order-timeline .step {
-      flex: 1 1 0;
-      text-align: center;
-      position: relative;
-    }
-    .order-timeline .step-circle {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      border: 2px solid #ccc;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      background-color: #fff;
-      z-index: 2;
-    }
-    .order-timeline .step-circle.active {
-      border-color: #28a745;
-      background-color: #28a745;
-      color: #fff;
-    }
-    .order-timeline .step-label {
-      margin-top: 4px;
-      font-size: 12px;
-    }
-    .order-timeline .step-line {
-      position: absolute;
-      top: 13px;
-      left: 50%;
-      width: 100%;
-      height: 2px;
-      background-color: #ccc;
-      z-index: 1;
-    }
-    .order-timeline .step-line.active {
-      background-color: #28a745;
-    }
-    @media (max-width: 576px) {
-      .order-timeline .step-label {
-        font-size: 11px;
-      }
-    }
   </style>
 </head>
 <body>
-  <div id="navbar-container"></div>
 
-  <div class="container my-4">
-    <h2 class="mb-4">My Orders</h2>
-    <div id="ordersContainer"></div>
+<div id="navbar-container"></div>
+
+<div class="container my-4">
+  <h2 class="mb-4">My Orders</h2>
+  <div id="ordersContainer"></div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="about.html">About</a> |
+    <a href="contact.html">Contact</a> |
+    <a href="faq.html">FAQ</a> |
+    <a href="privacy.html">Privacy Policy</a> |
+    <a href="terms.html">Terms & Conditions</a> |
+    <a href="refund.html">Refund & Cancellation</a>
   </div>
+  <div class="footer-copy">© 2025 GT Mall. All rights reserved.</div>
+</footer>
 
-  <footer class="site-footer">
-    <div class="footer-links">
-      <a href="about.html">About</a> |
-      <a href="contact.html">Contact</a> |
-      <a href="faq.html" class="text-decoration-none me-3">FAQ</a> |
-      <a href="privacy.html">Privacy Policy</a> |
-      <a href="terms.html">Terms & Conditions</a> |
-      <a href="refund.html">Refund & Cancellation</a>
-    </div>
-    <div class="footer-copy">
-      © 2025 GT Mall. All rights reserved.
-    </div>
-  </footer>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/navbar.js"></script>
 
-  <script src="assets/js/cart.js"></script>
-  <script src="assets/js/navbar.js"></script>
-  <script>
-  const API_BASE = "https://gtmall-com.onrender.com";
-  function authHeaders() {
-    return {
-      "Content-Type": "application/json",
-      "x-user-id": localStorage.getItem("userUid") || "",
-      "x-user-email": localStorage.getItem("userEmail") || "",
-      "x-user-name": localStorage.getItem("userName") || "",
-    };
-  }
+<script>
+const API_BASE = "https://gtmall-com.onrender.com";
 
-  function formatDate(dtStr) {
-    const d = new Date(dtStr);
-    return d.toLocaleString();
-  }
+function authHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "x-user-id": localStorage.getItem("userUid") || "",
+    "x-user-email": localStorage.getItem("userEmail") || "",
+    "x-user-name": localStorage.getItem("userName") || "",
+  };
+}
 
-  function addDays(dtStr, days) {
-    const d = new Date(dtStr);
-    d.setDate(d.getDate() + days);
-    return d;
-  }
+function formatDate(dt) {
+  return new Date(dt).toLocaleString();
+}
 
-  function expectedDelivery(dtStr) {
-    const d = addDays(dtStr, 7);
-    return d.toDateString();
-  }
+document.addEventListener("DOMContentLoaded", async () => {
+  const container = document.getElementById("ordersContainer");
 
-  // Decide tracking stage based on how many days have passed
-  // 0: Ordered, 1: Shipped, 2: Out for delivery, 3: Delivered
-  function computeStage(createdAt) {
-    try {
-      const created = new Date(createdAt);
-      const now = new Date();
-      const diffMs = now.getTime() - created.getTime();
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  try {
+    const res = await fetch(API_BASE + "/api/orders/mine", {
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed");
 
-      if (diffDays >= 7) return 3;
-      if (diffDays >= 3) return 2;
-      if (diffDays >= 1) return 1;
-      return 0;
-    } catch {
-      return 0;
+    const orders = await res.json();
+    if (!orders.length) {
+      container.innerHTML = "<p>You have no orders yet.</p>";
+      return;
     }
-  }
 
-  function buildTrackingTimeline(order) {
-    const stage = computeStage(order.createdAt);
-    const steps = [
-      { key: "ordered", label: "Ordered" },
-      { key: "shipped", label: "Shipped" },
-      { key: "out", label: "Out for delivery" },
-      { key: "delivered", label: "Delivered" },
-    ];
+    container.innerHTML = "";
 
-    const expected = expectedDelivery(order.createdAt);
+    orders.forEach((o) => {
+      const card = document.createElement("div");
+      card.className = "card mb-3 order-card";
 
-    const items = steps
-      .map((step, idx) => {
-        const active = idx <= stage;
-        const circleClass = active ? "step-circle active" : "step-circle";
-        const lineClass = idx < stage ? "step-line active" : "step-line";
+      const refundHtml =
+        o.paymentStatus === "paid" && o.refundStatus === "none"
+          ? `<button class="btn btn-sm btn-outline-danger refund-btn" data-id="${o._id}">
+               Request Refund
+             </button>`
+          : o.refundStatus === "requested"
+          ? `<span class="badge bg-warning text-dark">Refund Requested</span>`
+          : o.refundStatus === "processed"
+          ? `<span class="badge bg-success">Refunded</span>`
+          : "";
 
-        return `
-          <div class="step">
-            <div class="${circleClass}">${idx + 1}</div>
-            <div class="step-label">${step.label}</div>
-            ${
-              idx < steps.length - 1
-                ? '<div class="' + lineClass + '"></div>'
-                : ""
-            }
+      const itemsHtml = (o.items || [])
+        .map(
+          (i) => `
+          <li class="list-group-item d-flex justify-content-between">
+            <span>${i.name || "Item"} (x${i.quantity || 1})</span>
+            <strong>₹${i.price}</strong>
+          </li>`
+        )
+        .join("");
+
+      card.innerHTML = `
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Order #${o._id}</h5>
+            <div class="d-flex gap-2 align-items-center">
+              <span class="badge bg-secondary">${o.status}</span>
+              ${refundHtml}
+            </div>
           </div>
-        `;
-      })
-      .join("");
 
-    return `
-      <div class="order-timeline mt-3">
-        <div class="d-flex justify-content-between mb-1">
-          <small class="text-muted">Order placed: ${formatDate(
-            order.createdAt
-          )}</small>
-          <small class="text-muted">Expected delivery: ${expected}</small>
+          <p class="mb-1"><strong>Amount:</strong> ₹${o.amount}</p>
+          <p class="mb-2"><strong>Placed:</strong> ${formatDate(o.createdAt)}</p>
+
+          <button class="btn btn-sm btn-outline-primary toggle-details">
+            View Details
+          </button>
+
+          <div class="order-details mt-3" style="display:none;">
+            <h6>Items</h6>
+            <ul class="list-group mb-3">${itemsHtml}</ul>
+
+            <h6>Delivery Address</h6>
+            <p class="small">
+              ${o.address?.name || ""}<br/>
+              ${o.address?.areaStreet || ""}, ${o.address?.city || ""}<br/>
+              ${o.address?.state || ""} - ${o.address?.pin || ""}<br/>
+              Mobile: ${o.address?.mobile || ""}
+            </p>
+          </div>
         </div>
-        <div class="steps-wrapper d-flex flex-row justify-content-between">
-          ${items}
-        </div>
-      </div>
-    `;
+      `;
+
+      container.appendChild(card);
+
+      const details = card.querySelector(".order-details");
+      card.querySelector(".toggle-details").onclick = () => {
+        details.style.display = details.style.display === "none" ? "block" : "none";
+      };
+    });
+  } catch (e) {
+    container.innerHTML = "<p>Please login again.</p>";
   }
+});
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    const container = document.getElementById("ordersContainer");
-    try {
-      const res = await fetch(API_BASE + "/api/orders/mine", {
+/* ---------- REFUND REQUEST HANDLER ---------- */
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".refund-btn");
+  if (!btn) return;
+
+  const orderId = btn.dataset.id;
+  if (!confirm("Are you sure you want to request a refund?")) return;
+
+  try {
+    btn.disabled = true;
+    btn.textContent = "Requesting...";
+
+    const res = await fetch(
+      API_BASE + "/api/orders/" + orderId + "/request-refund",
+      {
+        method: "POST",
         headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error("Failed");
-      const orders = await res.json();
-      if (!orders.length) {
-        container.innerHTML = "<p>You have no orders yet.</p>";
-        return;
       }
-      container.innerHTML = "";
+    );
 
-      orders.forEach((o) => {
-        const card = document.createElement("div");
-        card.className = "card mb-3 order-card";
-        card.style.cursor = "pointer";
-
-        const itemsHtml = (o.items || [])
-          .map((i) => {
-            const img =
-              i.img ||
-              i.image ||
-              (Array.isArray(i.images) && i.images[0]) ||
-              "assets/img/placeholder.png";
-            const name = i.name || i.title || i.productName || "Item";
-            const qty = i.quantity || 1;
-            const price = i.price || 0;
-            const productId = i.productId || i.id || "";
-            const link = productId
-              ? `product.html?id=${productId}`
-              : "javascript:void(0)";
-
-            return `
-              <li class="list-group-item">
-                <div class="d-flex align-items-center">
-                  <a href="${link}" class="me-3">
-                    <img src="${img}" alt="${name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
-                  </a>
-                  <div class="flex-grow-1">
-                    <a href="${link}" class="text-decoration-none text-dark d-block">${name}</a>
-                    <small class="text-muted">Qty: ${qty}</small>
-                  </div>
-                  <div class="ms-2 fw-semibold">₹${price}</div>
-                </div>
-              </li>
-            `;
-          })
-          .join("");
-
-        const trackingHtml = buildTrackingTimeline(o);
-
-        const address = o.address || {};
-        const addrText = address && Object.keys(address).length
-          ? `
-            ${address.name || ""}<br>
-            ${(address.areaStreet || "")}${
-            address.locality ? ", " + address.locality : ""
-          }<br>
-            ${(address.city || "")}${
-            address.state ? ", " + address.state : ""
-          }${address.pin ? " - " + address.pin : ""}<br>
-            Mobile: ${address.mobile || ""}${
-            address.altMobile ? " / " + address.altMobile : ""
-          }
-          `
-          : "<em class='text-muted'>Address not available</em>";
-
-        card.innerHTML = `
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h5 class="card-title mb-0 text-success order-id">Order #${
-                o._id
-              }</h5>
-              <span class="badge bg-secondary">${o.status || "Processing"}</span>
-            </div>
-            <p class="mb-1"><strong>Amount:</strong> ₹${o.amount}</p>
-            <p class="mb-1"><strong>Placed:</strong> ${formatDate(
-              o.createdAt
-            )}</p>
-            <p class="mb-2"><strong>Expected delivery:</strong> ${expectedDelivery(
-              o.createdAt
-            )}</p>
-
-            <div class="order-summary d-flex justify-content-between align-items-center">
-              <div class="small text-muted">
-                ${o.items && o.items[0]
-                  ? (o.items[0].name ||
-                      o.items[0].title ||
-                      o.items[0].productName ||
-                      "Item") + (o.items.length > 1 ? " +" + (o.items.length - 1) + " more" : "")
-                  : ""}
-              </div>
-              <button class="btn btn-sm btn-outline-primary toggle-details">
-                View Details
-              </button>
-            </div>
-
-            <div class="order-details mt-3" style="display:none;">
-              <h6>Items</h6>
-              <ul class="list-group mb-3">${itemsHtml}</ul>
-              <h6>Delivery Address</h6>
-              <p class="small mb-0">${addrText}</p>
-              ${trackingHtml}
-            </div>
-          </div>
-        `;
-
-        container.appendChild(card);
-
-        const detailsEl = card.querySelector(".order-details");
-        const toggleBtn = card.querySelector(".toggle-details");
-        const titleEl = card.querySelector(".order-id");
-
-        function toggle() {
-          const isVisible = detailsEl.style.display !== "none";
-          detailsEl.style.display = isVisible ? "none" : "block";
-          if (toggleBtn) {
-            toggleBtn.textContent = isVisible ? "View Details" : "Hide Details";
-          }
-        }
-
-        if (toggleBtn) {
-          toggleBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            toggle();
-          });
-        }
-
-        card.addEventListener("click", (e) => {
-          // avoid double when clicking button
-          if (e.target.closest(".toggle-details")) return;
-          toggle();
-        });
-      });
-    } catch (e) {
-      console.error(e);
-      container.innerHTML =
-        "<p>Unable to load orders. Please login again.</p>";
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Refund request failed");
+      btn.disabled = false;
+      btn.textContent = "Request Refund";
+      return;
     }
-  });
+
+    alert("Refund request submitted successfully.");
+    location.reload();
+  } catch (err) {
+    alert("Something went wrong.");
+    btn.disabled = false;
+    btn.textContent = "Request Refund";
+  }
+});
 </script>
-  <script src="assets/js/load-navbar.js"></script>
-  <script src="assets/js/api.js"></script>
 
 </body>
 </html>
