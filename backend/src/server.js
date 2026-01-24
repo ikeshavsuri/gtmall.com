@@ -744,3 +744,8 @@ app.get("/api/products/:id/similar", async (req, res) => {
     res.status(500).json({ message: "Failed to load similar products" });
   }
 });
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
