@@ -3,15 +3,15 @@ import cors from "cors";
 import mongoose from "mongoose";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
-
-dotenv.config();
+import Razorpay from "razorpay";
+import crypto from "crypto";
 
 import { connectDB } from "./config/db.js";
-// import { User } from "./models/User.js";  // agar kahin use nahi ho raha to comment rehne do
 import Address from "./models/Address.js";
 import Order from "./models/Order.js";
-
 import { userFromHeaders, requireAdmin } from "./middleware_auth.js";
+
+dotenv.config();
 
 // DB connect
 connectDB();
@@ -158,107 +158,104 @@ app.delete("/api/addresses/:id", userFromHeaders, async (req, res) => {
 });
 
 
-import Razorpay from "razorpay";
-
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
-
-const razorpay = new Razorpay({
-  key_id: RAZORPAY_KEY_ID,
-  key_secret: RAZORPAY_KEY_SECRET,
-});
-
-// Create Razorpay order and return order_id
+// ================================
+// RAZORPAY CREATE ORDER (SAFE)
+// ================================
 app.post("/api/razorpay/create-order", userFromHeaders, async (req, res) => {
   try {
-    const { amount } = req.body || {};
+    const { amount, items, address } = req.body || {};
 
     if (!amount) {
       return res.status(400).json({ message: "Amount is required" });
     }
 
-    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-      return res
-        .status(500)
-        .json({ message: "Razorpay keys not configured on server" });
-    }
-
     const order = await razorpay.orders.create({
-      amount: Number(amount) * 100, // Razorpay works in paise
+      amount: Number(amount) * 100,
       currency: "INR",
       receipt: `order_${Date.now()}`,
+      notes: {
+        userId: req.user?.id || "guest",
+        email: req.user?.email || "",
+        items: JSON.stringify(items || []),
+        address: JSON.stringify(address || {}),
+      },
     });
 
     return res.json({
       orderId: order.id,
       amount: order.amount,
-      keyId: RAZORPAY_KEY_ID,
+      keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (err) {
     console.error("Razorpay create-order error:", err);
-    return res
-      .status(500)
-      .json({ message: "Failed to create Razorpay order" });
+    return res.status(500).json({ message: "Failed to create Razorpay order" });
   }
 });
+// ================================
+// RAZORPAY WEBHOOK (AUTO ORDER CREATE)
+// ================================
+app.post(
+  "/api/razorpay/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    try {
+      const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+      const signature = req.headers["x-razorpay-signature"];
 
-// Confirm Razorpay payment and create local Order document
-app.post("/api/razorpay/confirm", userFromHeaders, async (req, res) => {
-  try {
-    const { razorpayPaymentId, items, amount, address } = req.body || {};
+      const expected = crypto
+        .createHmac("sha256", secret)
+        .update(req.body)
+        .digest("hex");
 
-    if (!razorpayPaymentId) {
-      return res
-        .status(400)
-        .json({ message: "razorpayPaymentId is required" });
+      if (signature !== expected) {
+        return res.status(400).send("Invalid signature");
+      }
+
+      const payload = JSON.parse(req.body.toString());
+
+      if (payload.event !== "payment.captured") {
+        return res.json({ ignored: true });
+      }
+
+      const payment = payload.payload.payment.entity;
+
+      // 🔁 Duplicate protection
+      const exists = await Order.findOne({ paymentId: payment.id });
+      if (exists) {
+        return res.json({ ok: true, duplicate: true });
+      }
+
+      let items = [];
+      let address = null;
+
+      try {
+        if (payment.notes?.items) {
+          items = JSON.parse(payment.notes.items);
+        }
+        if (payment.notes?.address) {
+          address = JSON.parse(payment.notes.address);
+        }
+      } catch {}
+
+      await Order.create({
+        userId: payment.notes?.userId || "guest",
+        userEmail: payment.email || "",
+        items,
+        amount: payment.amount / 100,
+        paymentStatus: "paid",
+        paymentId: payment.id,
+        razorpayOrderId: payment.order_id,
+        address,
+        status: "Processing",
+      });
+
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error("Webhook error:", err);
+      return res.status(500).send("Webhook error");
     }
-
-    if (!Array.isArray(items) || !items.length) {
-      return res.status(400).json({ message: "No items in order" });
-    }
-
-    // NOTE:
-    // Yahan Cashfree jaisa server-to-server verify nahi hota.
-    // Razorpay checkout success ke baad hi ye API call honi chahiye.
-
-    const totalAmount = Number(amount || 0);
-
-    const orderDoc = await Order.create({
-      userId: req.user.id,
-      userEmail: req.user.email,
-      items: items.map((i) => ({
-        productId: i.id?.toString?.() || i.productId || "",
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity || 1,
-        image: i.img || i.image || "",
-      })),
-      amount: totalAmount,
-      paymentStatus: "paid",
-      paymentId: razorpayPaymentId,
-      razorpayOrderId: "",       // optional (agar frontend bheje to bhar sakte ho)
-      razorpaySignature: "",     // optional (signature verify later add kar sakte ho)
-      address,
-      status: "Processing",
-    });
-
-    return res.json({ success: true, order: orderDoc });
-  } catch (err) {
-    console.error("Razorpay confirm error:", err);
-    return res
-      .status(500)
-      .json({ message: "Failed to confirm payment" });
   }
-});
-
-
-
-// ---------------------------
-//  SIMPLE HEALTH CHECK
-// ---------------------------
-app.get("/", (req, res) => {
-  res.json({ ok: true, message: "GT Mall backend running ✅" });
-});
+);
 
 // ---------------------------
 //  CART MODEL (cross-device sync)
@@ -414,56 +411,20 @@ app.get("/api/address", userFromHeaders, async (req, res) => {
 // ---------------------------
 //  ORDERS (user side)
 // ---------------------------
-app.post("/api/orders", userFromHeaders, async (req, res) => {
-  try {
-    const {
-      items,
-      amount,
-      address,
-      razorpay_payment_id,
-      razorpay_order_id,
-      razorpay_signature,
-    } = req.body || {};
 
-    if (!Array.isArray(items) || !items.length) {
-      return res.status(400).json({ message: "No items in order" });
-    }
-
-    const orderDoc = await Order.create({
-      userId: req.user.id,
-      userEmail: req.user.email,
-      items: items.map((i) => ({
-        productId: i.id?.toString?.() || i.productId || "",
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity || 1,
-        image: i.img || i.image || "",
-      })),
-      amount,
-      paymentStatus: "paid",
-      paymentId: razorpay_payment_id,
-      razorpayOrderId: razorpay_order_id,
-      razorpaySignature: razorpay_signature,
-      address,
-      status: "Processing",
-    });
-
-    return res.json(orderDoc);
-  } catch (err) {
-    console.error("POST /api/orders error:", err);
-    return res.status(500).json({ message: "Failed to place order" });
-  }
-});
-
-
-// GET /api/orders/mine  -> list of orders for current user (used in my_orders.html)
+// GET /api/orders/mine
+// Logged-in user ke saare orders (My Orders page)
 app.get("/api/orders/mine", userFromHeaders, async (req, res) => {
   try {
     const user = req.user;
     if (!user || !user.id) {
       return res.status(401).json({ message: "Not logged in" });
     }
-    const orders = await Order.find({ userId: user.id }).sort({ createdAt: -1 });
+
+    const orders = await Order.find({ userId: user.id }).sort({
+      createdAt: -1,
+    });
+
     return res.json(orders);
   } catch (err) {
     console.error("GET /api/orders/mine error:", err);
@@ -471,12 +432,14 @@ app.get("/api/orders/mine", userFromHeaders, async (req, res) => {
   }
 });
 
-// user ke khud ke orders
+// BACKWARD COMPAT / alias
+// GET /api/my-orders
 app.get("/api/my-orders", userFromHeaders, async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.user.id }).sort({
       createdAt: -1,
     });
+
     return res.json(orders);
   } catch (err) {
     console.error("GET /api/my-orders error:", err);

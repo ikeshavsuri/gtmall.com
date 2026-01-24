@@ -1,85 +1,50 @@
-// backend/src/models/Order.js
 import mongoose from "mongoose";
 
-const orderItemSchema = new mongoose.Schema(
-  {
-    productId: {
-      type: String,
-    },
-    name: {
-      type: String,
-    },
-    price: {
-      type: Number,
-    },
-    quantity: {
-      type: Number,
-      default: 1,
-    },
-    image: {
-      type: String,
-    },
-  },
-  { _id: false }
-);
-
-// address ko flexible rakha hai taaki jo bhi fields frontend se aaye, sab save ho jaye
-const addressSchema = new mongoose.Schema(
-  {},
-  { _id: false, strict: false } // strict false -> koi bhi keys aa sakti hain (name, phone, city, etc.)
-);
+const orderItemSchema = new mongoose.Schema({
+  productId: String,
+  name: String,
+  price: Number,
+  quantity: Number,
+  image: String,
+});
 
 const orderSchema = new mongoose.Schema(
   {
-    userId: {
-      type: String,
-      required: true,
-    },
-    userEmail: {
-      type: String,
-      required: true,
-    },
-    items: {
-      type: [orderItemSchema],
-      required: true,
-      default: [],
-    },
-    amount: {
-      type: Number,
-      required: true,
-    },
+    userId: { type: String, default: "guest" },
+    userEmail: { type: String, default: "" },
+
+    items: [orderItemSchema],
+
+    amount: { type: Number, required: true },
+
+    // Payment
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
-    paymentId: {
+    paymentId: { type: String, index: true }, // Razorpay payment id
+    razorpayOrderId: String,
+
+    // Return / Refund
+    returnRequested: { type: Boolean, default: false },
+    refundStatus: {
       type: String,
+      enum: ["none", "requested", "processed"],
+      default: "none",
     },
-    razorpayOrderId: {
-      type: String,
-    },
-    razorpaySignature: {
-      type: String,
-    },
-    address: {
-      type: addressSchema,
-    },
+    refundId: String,
+
+    address: Object,
+
     status: {
       type: String,
       enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
       default: "Processing",
     },
   },
-  {
-    timestamps: true, // createdAt, updatedAt
-  }
+  { timestamps: true }
 );
 
 const Order = mongoose.model("Order", orderSchema);
-
-// IMPORTANT: default export add kiya hai, isse
-// `import Order from "./models/Order.js";` sahi chalega
 export default Order;
-export { Order };
-
