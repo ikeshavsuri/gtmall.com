@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
       payNowBtn.disabled = true;
       payNowBtn.textContent = "Processing...";
 
-      // Save address (safe, optional)
+      // Save address (optional)
       fetch(API_BASE + "/api/addresses", {
         method: "POST",
         headers: authHeaders(),
@@ -169,15 +169,42 @@ document.addEventListener("DOMContentLoaded", () => {
         currency: "INR",
         order_id: data.orderId,
         name: "GT Mall",
-        handler: function () {
-          alert("Payment successful. Order will appear shortly.");
-          localStorage.removeItem("cartItems");
-          localStorage.removeItem("buyNowItem");
-          window.location.href = "my_orders.html";
-        },
+
+        // 🔥 FIXED HANDLER (ORDER CREATE)
+        handler: async function (response) {
+          try {
+            const orderRes = await fetch(API_BASE + "/api/orders/create", {
+              method: "POST",
+              headers: authHeaders(),
+              body: JSON.stringify({
+                items: cart,
+                totalAmount: subtotal,
+                paymentId: response.razorpay_payment_id
+              })
+            });
+
+            const orderData = await orderRes.json();
+
+            if (!orderRes.ok || !orderData.success) {
+              alert("Payment successful but order save failed");
+              return;
+            }
+
+            localStorage.removeItem("cartItems");
+            localStorage.removeItem("buyNowItem");
+
+            alert("Order placed successfully!");
+            window.location.href = "my_orders.html";
+
+          } catch (err) {
+            console.error(err);
+            alert("Payment done but order creation failed");
+          }
+        }
       };
 
       new Razorpay(options).open();
+
     } catch (err) {
       console.error(err);
       alert("Payment failed. Please try again.");
