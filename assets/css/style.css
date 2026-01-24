@@ -439,3 +439,82 @@ nav.navbar {
     padding: 10px;
   }
 }
+/* ================================
+   ADMIN DASHBOARD – REFUND UI
+================================ */
+
+/* Orders table improve */
+.table td,
+.table th {
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+/* Order ID link */
+.admin-order-link,
+.admin-order-detail {
+  font-weight: 600;
+  color: #0d6efd;
+  text-decoration: none;
+}
+.admin-order-detail:hover {
+  text-decoration: underline;
+}
+
+/* Payment / Refund badges */
+.badge-refund-none {
+  background-color: #adb5bd;
+  color: #fff;
+}
+
+.badge-refund-requested {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.badge-refund-processed {
+  background-color: #198754;
+  color: #fff;
+}
+
+/* Payment badge */
+.badge-paid {
+  background-color: #198754;
+}
+.badge-pending {
+  background-color: #ffc107;
+  color: #000;
+}
+.badge-refunded {
+  background-color: #dc3545;
+}
+
+/* Refund approve button */
+.btn-refund-approve {
+  font-size: 12px;
+  padding: 4px 8px;
+  font-weight: 600;
+}
+
+/* Disable approve button look */
+.btn-refund-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Order detail modal */
+#orderDetailModal .modal-body {
+  font-size: 14px;
+}
+
+/* Print label button */
+#btnPrintLabel {
+  font-weight: 600;
+}
+
+/* Responsive tweak */
+@media (max-width: 768px) {
+  .table {
+    font-size: 13px;
+  }
+}
