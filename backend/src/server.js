@@ -5,6 +5,8 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
+
 
 import { connectDB } from "./config/db.js";
 import Address from "./models/Address.js";
@@ -19,6 +21,18 @@ dotenv.config();
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+// --------------------
+// EMAIL TRANSPORTER (SMTP)
+// --------------------
+const mailTransporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: false, // 587
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 // --------------------
@@ -212,6 +226,7 @@ app.post("/api/razorpay/confirm", userFromHeaders, async (req, res) => {
       status: "Processing",
       refundStatus: "none",
     });
+    await sendOrderConfirmationEmail(order); // ✅ NEW LINE
 
     res.json({ success: true, order });
   } catch (err) {
@@ -219,6 +234,43 @@ app.post("/api/razorpay/confirm", userFromHeaders, async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+async function sendOrderConfirmationEmail(order) {
+  if (!order?.userEmail) return;
+
+  const itemsHtml = order.items
+    .map(
+      (i) =>
+        `<li>${i.name} × ${i.quantity} — ₹${i.price}</li>`
+    )
+    .join("");
+
+  const trackingLink = `${process.env.CLIENT_ORIGIN}/my_orders.html`;
+
+  const html = `
+    <h2>🎉 Order Confirmed - GT Mall</h2>
+    <p>Thank you for shopping with us!</p>
+
+    <p><b>Order ID:</b> ${order._id}</p>
+    <p><b>Payment ID:</b> ${order.paymentId}</p>
+    <p><b>Total Amount:</b> ₹${order.amount}</p>
+
+    <h3>Items</h3>
+    <ul>${itemsHtml}</ul>
+
+    <p>
+      🔎 <a href="${trackingLink}">Track your order</a>
+    </p>
+
+    <p>— Team GT Mall</p>
+  `;
+
+  await mailTransporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: order.userEmail,
+    subject: `Order Confirmed | GT Mall | ${order._id}`,
+    html,
+  });
+}
 
 // ===================================================
 // RAZORPAY WEBHOOK
