@@ -1,5 +1,5 @@
 // assets/js/seller.js
-// Assumes: API_BASE & authHeaders() are defined in assets/js/api.js
+// Assume: API_BASE & authHeaders() are defined in assets/js/api.js
 
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, options);
@@ -10,26 +10,23 @@ async function fetchJson(url, options = {}) {
   return res.json();
 }
 
-// -------------------------
-// Build payload from form
-// -------------------------
 function productPayloadFromForm() {
   const name = document.getElementById("name").value.trim();
-  const description = document.getElementById("description").value.trim();
+  const description = document
+    .getElementById("description")
+    .value.trim(); // ⬅ ye line important
 
   const price = Number(document.getElementById("price").value || 0);
   const mrp = Number(document.getElementById("mrp").value || price);
   const category = document.getElementById("category").value.trim();
   const image = document.getElementById("image").value.trim();
-  const stock = Math.max(
-    0,
-    Number(document.getElementById("stock").value || 0)
-  );
+  const stock = Number(document.getElementById("stock").value || 0);
 
   return {
     name,
     title: name,
-    description,
+    description,              // ⬅ backend me save hoga
+    shortDescription: description, // (optional) agar detail page me chahiye
     price,
     mrp,
     category,
@@ -40,9 +37,7 @@ function productPayloadFromForm() {
   };
 }
 
-// -------------------------
-// Fill form for edit
-// -------------------------
+
 function fillFormWithProduct(p) {
   document.getElementById("productId").value = p._id || "";
   document.getElementById("name").value = p.name || p.title || "";
@@ -50,36 +45,28 @@ function fillFormWithProduct(p) {
   document.getElementById("price").value = p.price || "";
   document.getElementById("mrp").value = p.mrp || "";
   document.getElementById("category").value = p.category || "";
-  document.getElementById("image").value =
-    p.image || (p.images && p.images[0]) || "";
-  document.getElementById("stock").value = p.stock ?? 0;
+  document.getElementById("image").value = p.image || (p.images && p.images[0]) || "";
+  document.getElementById("stock").value = p.stock || 0;
   document.getElementById("formTitle").textContent = "Edit Product";
 }
 
-// -------------------------
-// Reset form
-// -------------------------
 function resetForm() {
   document.getElementById("productId").value = "";
   document.getElementById("productForm").reset();
   document.getElementById("formTitle").textContent = "Add New Product";
 }
 
-// -------------------------
-// Render products table
-// -------------------------
 function renderProductsTable(products) {
   const tbody = document.getElementById("productsTableBody");
-
   if (!products.length) {
     tbody.innerHTML = `<tr><td colspan="6">No products yet.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = "";
-
   products.forEach((p) => {
     const tr = document.createElement("tr");
+
     const imgUrl = p.image || (p.images && p.images[0]) || "";
 
     tr.innerHTML = `
@@ -93,7 +80,7 @@ function renderProductsTable(products) {
             : "-"
         }
       </td>
-      <td>${p.stock ?? 0}</td>
+      <td>${p.stock ?? ""}</td>
       <td>
         <button class="btn btn-sm btn-secondary edit-btn">Edit</button>
         <button class="btn btn-sm btn-danger delete-btn">Delete</button>
@@ -106,7 +93,7 @@ function renderProductsTable(products) {
     });
 
     tr.querySelector(".delete-btn").addEventListener("click", async () => {
-      if (!confirm(`Delete product "${p.name}"?`)) return;
+      if (!confirm("Delete this product?")) return;
       try {
         await fetchJson(`${API_BASE}/api/admin/products/${p._id}`, {
           method: "DELETE",
@@ -125,12 +112,8 @@ function renderProductsTable(products) {
   });
 }
 
-// -------------------------
-// Load products
-// -------------------------
 async function loadProducts() {
   const statusEl = document.getElementById("sellerStatus");
-
   try {
     const products = await fetchJson(`${API_BASE}/api/admin/products`, {
       headers: authHeaders(),
@@ -147,21 +130,17 @@ async function loadProducts() {
     } else {
       statusEl.textContent = "Failed to load products.";
     }
-    document.getElementById(
-      "productsTableBody"
-    ).innerHTML = `<tr><td colspan="6">Unable to load products.</td></tr>`;
+    const tbody = document.getElementById("productsTableBody");
+    tbody.innerHTML = `<tr><td colspan="6">Unable to load products.</td></tr>`;
   }
 }
 
-// -------------------------
-// CSV helpers
-// -------------------------
 function parseCsv(text) {
+  // Very simple CSV parser (no quoted commas support)
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
-
   if (!lines.length) return [];
 
   const headers = lines[0].split(",").map((h) => h.trim());
@@ -181,7 +160,6 @@ function parseCsv(text) {
 async function uploadCsv(file) {
   const statusEl = document.getElementById("csvStatus");
   statusEl.textContent = "Reading file...";
-
   const text = await file.text();
   const rows = parseCsv(text);
 
@@ -209,12 +187,11 @@ async function uploadCsv(file) {
   }
 }
 
-// -------------------------
-// Init
-// -------------------------
 document.addEventListener("DOMContentLoaded", () => {
+  // Load existing products
   loadProducts();
 
+  // Form submit
   document
     .getElementById("productForm")
     .addEventListener("submit", async (e) => {
@@ -226,6 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         if (id) {
+          // update
           await fetchJson(`${API_BASE}/api/admin/products/${id}`, {
             method: "PUT",
             headers: {
@@ -236,6 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           statusEl.textContent = "Product updated.";
         } else {
+          // create
           await fetchJson(`${API_BASE}/api/admin/products`, {
             method: "POST",
             headers: {
@@ -246,7 +225,6 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           statusEl.textContent = "Product created.";
         }
-
         resetForm();
         loadProducts();
       } catch (err) {
@@ -254,8 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
         statusEl.textContent = "Save failed: " + err.message;
       }
     });
-
-  // Image file -> base64
+      // Image file -> base64 -> image input
   const imageFileInput = document.getElementById("imageFile");
   if (imageFileInput) {
     imageFileInput.addEventListener("change", () => {
@@ -264,19 +241,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const reader = new FileReader();
       reader.onload = () => {
+        // jo URL field hai usme base64 string daal do
         document.getElementById("image").value = reader.result;
       };
       reader.readAsDataURL(file);
     });
   }
 
-  document
-    .getElementById("resetFormBtn")
-    ?.addEventListener("click", resetForm);
 
   document
+    .getElementById("resetFormBtn")
+    .addEventListener("click", () => resetForm());
+
+  // CSV upload
+  document
     .getElementById("uploadCsvBtn")
-    ?.addEventListener("click", async () => {
+    .addEventListener("click", async () => {
       const input = document.getElementById("csvFileInput");
       if (!input.files || !input.files[0]) {
         alert("Please choose a CSV file first.");
